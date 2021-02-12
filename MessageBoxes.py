@@ -4,6 +4,7 @@ Functions to throw message boxes from form
 
 from PyQt5 import QtWidgets, QtCore
 from GUI_Objects import Fonts
+
 def EnterPointAlert():
     # Warn user that entering point starts a new traverse
     Font = Fonts.LabelFonts()
@@ -13,22 +14,9 @@ def EnterPointAlert():
     msg.setInformativeText("Enter Point will start a new traverse.\n"
                            "Are you sure you want to start a new traverse?\n\n"
                            "Click Ok to continue with Enter Point")
-    msg.setWindowFlags(
-        QtCore.Qt.FramelessWindowHint  # hides the window controls
-        | QtCore.Qt.SplashScreen  # this one hides it from the task bar!
-    )
-    msg.setStyleSheet("color: white; background-color: #c94134; border-radius: 30px;")
-    msg.setFont(Font)
     msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
-    for button in msg.findChildren(QtWidgets.QPushButton):
-        button.setObjectName("Button")
-        button.setStyleSheet("QPushButton#Button {color: black; background-color: "
-                             "yellow; border-radius: 5px;"
-                             "border-color: silver;}"
-                             "QPushButton#Button:hover "
-                             "{background-color : #ccc310;};")
-        button.setFont(Font)
-        button.setMinimumWidth(100)
+    msg = messgaeBoxFormat(msg)
+
     retval = msg.exec_()
 
     return retval
@@ -42,17 +30,7 @@ def CommitTraverseBeforeReset():
     msg.setInformativeText("Do you want to commit current traverse?\n\n"
                            "If you select 'NO' the current traverse will be deleted!\n")
     msg.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
-    msg.setWindowFlags(
-        QtCore.Qt.FramelessWindowHint  # hides the window controls
-        | QtCore.Qt.SplashScreen  # this one hides it from the task bar!
-    )
-    msg.setStyleSheet("color: white; background-color: #c94134; border-radius: 30px;")
-    for button in msg.findChildren(QtWidgets.QPushButton):
-        button.setStyleSheet("color: black; background-color: yellow; border-radius: 5px;"
-                             "border-color: silver;")
-        button.setFont(Font)
-        button.setMinimumWidth(100)
-    msg.setFont(Font)
+    msg = messgaeBoxFormat(msg)
 
     retval = msg.exec_()
 
@@ -68,17 +46,7 @@ def TraverseCloseInfo(close):
     msg.setInformativeText("\n\nDo you want to apply a transit adjustment to force traverse to close?")
     msg.setWindowTitle("Traverse Close Error")
     msg.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
-    msg.setWindowFlags(
-        QtCore.Qt.FramelessWindowHint  # hides the window controls
-        | QtCore.Qt.SplashScreen  # this one hides it from the task bar!
-    )
-    msg.setStyleSheet("color: white; background-color: #c94134; border-radius: 30px;")
-    for button in msg.findChildren(QtWidgets.QPushButton):
-        button.setStyleSheet("color: black; background-color: yellow; border-radius: 5px;"
-                             "border-color: silver;")
-        button.setFont(Font)
-        button.setMinimumWidth(100)
-    msg.setFont(Font)
+    msg = messgaeBoxFormat(msg)
     returnValue = msg.exec()
 
     return returnValue
@@ -90,21 +58,10 @@ def TraverseSuccesfulAdjustment():
     msg = QtWidgets.QMessageBox()
     msg.setIcon(QtWidgets.QMessageBox.Information)
     msg.setText("Traverse was closed!")
-    msg.setInformativeText("\n\nTraverse will be commited to the CadastralPlan.\n"
-                           "A new empty traverse has been created ready for next traverse path.")
+    msg.setInformativeText("\nTraverse will be commited to the CadastralPlan.")
     msg.setWindowTitle("Traverse Adjusted")
     msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-    msg.setWindowFlags(
-        QtCore.Qt.FramelessWindowHint  # hides the window controls
-        | QtCore.Qt.SplashScreen  # this one hides it from the task bar!
-    )
-    msg.setStyleSheet("color: white; background-color: #c94134; border-radius: 30px;")
-    for button in msg.findChildren(QtWidgets.QPushButton):
-        button.setStyleSheet("color: black; background-color: yellow; border-radius: 5px;"
-                             "border-color: silver;")
-        button.setFont(Font)
-        button.setMinimumWidth(100)
-    msg.setFont(Font)
+    msg = messgaeBoxFormat(msg)
     returnValue = msg.exec()
 
 def TraverseUnSuccesfulAdjustment(close):
@@ -116,17 +73,7 @@ def TraverseUnSuccesfulAdjustment(close):
                 "After adjustment close was: " + str(round(close * 1000, 1)) + "mm")
     msg.setWindowTitle("Traverse Close Error")
     msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-    msg.setWindowFlags(
-        QtCore.Qt.FramelessWindowHint  # hides the window controls
-        | QtCore.Qt.SplashScreen  # this one hides it from the task bar!
-    )
-    msg.setStyleSheet("color: white; background-color: #c94134; border-radius: 30px;")
-    for button in msg.findChildren(QtWidgets.QPushButton):
-        button.setStyleSheet("color: black; background-color: yellow; border-radius: 5px;"
-                             "border-color: silver;")
-        button.setFont(Font)
-        button.setMinimumWidth(100)
-    msg.setFont(Font)
+    msg = messgaeBoxFormat(msg)
     returnValue = msg.exec()
 
 def CloseDetectedMessage(CloseCheck):
@@ -147,41 +94,20 @@ def CloseDetectedMessage(CloseCheck):
     msg.setInformativeText(msgStr)
     msg.setWindowTitle("Traverse Close Detected")
     msg.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
-    msg.setWindowFlags(
-        QtCore.Qt.FramelessWindowHint  # hides the window controls
-        | QtCore.Qt.SplashScreen  # this one hides it from the task bar!
-    )
-    msg.setStyleSheet("color: white; background-color: #c94134; border-radius: 30px;")
-    for button in msg.findChildren(QtWidgets.QPushButton):
-        button.setStyleSheet("color: black; background-color: yellow; border-radius: 5px;"
-                             "border-color: silver;")
-        button.setFont(Font)
-        button.setMinimumWidth(100)
-    msg.setFont(Font)
+    msg = messgaeBoxFormat(msg)
     returnValue = msg.exec()
 
     return returnValue
 
 def PolygonRefPointError(RefPoint):
-    Font = Fonts.LabelFonts()
+
     msg = QtWidgets.QMessageBox()
     msg.setIcon(QtWidgets.QMessageBox.Warning)
     msg.setWindowTitle("Reference Point Error")
-    msg.setGeometry(500, 600, 400, 100)
-    msg.setWindowFlags(
-        QtCore.Qt.FramelessWindowHint  # hides the window controls
-        | QtCore.Qt.SplashScreen  # this one hides it from the task bar!
-    )
     msg.setText("Point Number " + str(RefPoint) + " does not exist!\n\n"
                                                   "Only Enter Point Numbers from Committed Traverses.")
-    msg.setStyleSheet("color: white; background-color: #c94134; border-radius: 30px;")
-    msg.setFont(Font)
-    msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-    for button in msg.findChildren(QtWidgets.QPushButton):
-        button.setStyleSheet("color: black; background-color: yellow; border-radius: 5px;"
-                             "border-color: silver;")
-        button.setFont(Font)
-        button.setMinimumWidth(100)
+    msg.setGeometry(500, 600, 400, 100)
+    msg = messgaeBoxFormat(msg)
     # msg.setStyleSheet("QButton{background-color: #3700B3")
     retval = msg.exec_()
 
@@ -195,17 +121,58 @@ def NoTraverseExistsCalcPoint():
                            "enter a point to start the traverse from")
     msg.setWindowTitle("No Traverse Exists")
     msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+    msg = messgaeBoxFormat(msg)
+
+    returnValue = msg.exec()
+
+def CalcPointChecksError(error):
+    msg = QtWidgets.QMessageBox()
+    msg.setIcon(QtWidgets.QMessageBox.Warning)
+    msg.setText("Input Data Error For Point Calculation:")
+    msg.setInformativeText(error)
+    msg.setWindowTitle("Calculate Point Error")
+    msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+    msg = messgaeBoxFormat(msg)
+    returnValue = msg.exec()
+    if returnValue == QtWidgets.QMessageBox.Ok:
+        msg.close()
+
+def NoTraverseError():
+    msg = QtWidgets.QMessageBox()
+    msg.setIcon(QtWidgets.QMessageBox.Warning)
+    msg.setText("No Traverse Exists!")
+    msg.setWindowTitle("No Traverse Error")
+    msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+    msg = messgaeBoxFormat(msg)
+    returnValue = msg.exec()
+    if returnValue == QtWidgets.QMessageBox.Ok:
+        msg.close()
+
+def genericMessage(mes, title):
+    msg = QtWidgets.QMessageBox()
+    msg.setIcon(QtWidgets.QMessageBox.Warning)
+    msg.setText(mes)
+    #msg.setInformativeText(error)
+    msg.setWindowTitle(title)
+    msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+    msg = messgaeBoxFormat(msg)
+    returnValue = msg.exec()
+    if returnValue == QtWidgets.QMessageBox.Ok:
+        msg.close()
+
+
+def messgaeBoxFormat(msg):
+    Font = Fonts.LabelFonts()
     msg.setWindowFlags(
         QtCore.Qt.FramelessWindowHint  # hides the window controls
         | QtCore.Qt.SplashScreen  # this one hides it from the task bar!
     )
     msg.setStyleSheet("color: white; background-color: #c94134; border-radius: 30px;")
     msg.setFont(Font)
-    msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
     for button in msg.findChildren(QtWidgets.QPushButton):
         button.setStyleSheet("color: black; background-color: yellow; border-radius: 5px;"
                              "border-color: silver;")
         button.setFont(Font)
         button.setMinimumWidth(100)
 
-    returnValue = msg.exec()
+    return msg

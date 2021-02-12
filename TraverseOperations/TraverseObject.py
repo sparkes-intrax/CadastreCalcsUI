@@ -97,3 +97,5 @@ class TraverseObject:
         # QtGui.QColor.
         Brush = QBrush(colour)
         item.setBrush(Brush)
+
+

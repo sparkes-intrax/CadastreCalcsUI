@@ -56,8 +56,8 @@ def misclose(travSeries, PlanObj):
         closePoint = travSeries.Points.__getattribute__(travSeries.StartRefPnt)
 
     else:
-        closePointRefNum = findNearestPoint(PlanObj, EastEnd, NorthEnd)
-        closePoint = PlanObj.Points.__getattribute__(closePointRefNum)
+        #closePointRefNum = findNearestPoint(PlanObj, EastEnd, NorthEnd)
+        closePoint = PlanObj.Points.__getattribute__(travSeries.EndRefPnt)
 
     EastClose = float(closePoint.E)
     NorthClose = float(closePoint.N)
@@ -109,7 +109,7 @@ class TraverseAdjustment:
 
         #calculate New Traverse close
         N_Error, E_Error, close = misclose(Traverse, PlanObj)
-        Traverse.Close_PostAdjust = round(close,1)
+        Traverse.Close_PostAdjust = round(close, 1)
         Traverse.Distance = self.TraverseDistance
 
         self.Traverse = Traverse

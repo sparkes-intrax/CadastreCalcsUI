@@ -15,7 +15,7 @@ class GuiDrawing(QGraphicsView):
 
         #set the scene props and initiate
         self.scene = QGraphicsScene()
-        Color = QtGui.QColor("#141a1f")
+        Color = QtGui.QColor("#1d1d1f")#141a1f
         self.scene.setBackgroundBrush(Color)
         self.setScene(self.scene)
 
@@ -111,6 +111,29 @@ class GuiDrawing(QGraphicsView):
         GraphLine.setFlag(QtWidgets.QGraphicsItem.ItemIsSelectable, True)
 
         return GraphLine
+
+    def Text(self, Easting, Northing, rotation, text):
+        '''
+        Adds Text at set location with rotation
+        :param Easting:
+        :param Northing:
+        :param rotation:
+        :return:
+        '''
+
+        TextLabel = self.scene.addText(text)
+        width = TextLabel.boundingRect().width()
+        height = TextLabel.boundingRect().height()
+        TextLabel.setPos((int(Easting * 1000)),
+                               (int(Northing * 1000)))
+        TextLabel.setRotation(rotation)
+        TextLabel.setDefaultTextColor(QtCore.Qt.white)
+        TextLabel.setFont(QtGui.QFont("Segoe UI", 1000, ))
+        TextLabel.setTextWidth(TextLabel.boundingRect().width())
+        TextLabel.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable, True)
+        TextLabel.setFlag(QtWidgets.QGraphicsItem.ItemIsSelectable, True)
+
+        return TextLabel
 
     #mouse modes
     def mousePointFunction(self):

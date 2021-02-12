@@ -181,10 +181,11 @@ class CheckTraverseClose:
         """
 
         #check Traverse object for close points
-        CloseError, ClosePointRefNum = self.CheckObject(point, traverse)
-        #if no point within close point tolerance in TraverseObject
+        CloseError, ClosePointRefNum, EastError, NorthError = \
+            self.CheckObject(point, traverse)
+        #if no point within close point tolerance in TraverseObject check already committed points
         if CloseError is None:
-            CloseError, ClosePointRefNum = \
+            CloseError, ClosePointRefNum, EastError, NorthError = \
                 self.CheckObject(point, CadastralPlan)
 
         #set object attributes
@@ -192,6 +193,8 @@ class CheckTraverseClose:
             self.Close = True
             self.CloseError = CloseError
             self.ClosePointRefNum = ClosePointRefNum
+            self.EastError = EastError
+            self.NorthError = NorthError
         else:
             self.Close = False
 
@@ -211,12 +214,14 @@ class CheckTraverseClose:
             ClosePoint = object.Points.__getattribute__(key)
             CloseError = self.Distance(point.E, ClosePoint.E,
                                             point.N, ClosePoint.N)
+            EastError = point.E - ClosePoint.E
+            NorthError = point.N - ClosePoint.N
 
             #check if TravPoint is within 100mm of point
-            if CloseError < 0.1 and point.PntNum != key:
-                return CloseError, key
+            if CloseError < 0.25 and point.PntNum != key:
+                return CloseError, key, EastError, NorthError
 
-        return None, None
+        return None, None, None, None
 
 
     def Distance(self, E1, E2, N1, N2):
@@ -372,7 +377,8 @@ def RemoveGraphicsItems(GraphicsItems, gui):
 
     for key in GraphicsItems.__dict__.keys():
         item = GraphicsItems.__getattribute__(key)
-        gui.view.scene.removeItem(item)
+        if key != "Label":
+            gui.view.scene.removeItem(item)
 
 class RedrawTraverse:
 
@@ -411,6 +417,9 @@ class RedrawTraverse:
             line = gui.traverse.Lines.__getattribute__(key)
             if line.StartRef == gui.traverse.refPnts[-1]:
                 setattr(line, "EndRef", gui.traverse.EndRefPnt)
+                if not gui.traverse.FirstTraverse:
+                    point = gui.CadastralPlan.Points.__getattribute__(gui.traverse.EndRefPnt)
+                    setattr(gui.traverse.Points, gui.traverse.EndRefPnt, point)
 
 
     def DrawPoints(self, gui):

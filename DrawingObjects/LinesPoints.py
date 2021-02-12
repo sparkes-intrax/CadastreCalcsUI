@@ -75,7 +75,7 @@ class AddPointToScene:
         PntNumLabel = view.scene.addText(self.point.PntNum)
         PntNumLabel.setPos(int(E), int(N + 1000))
         PntNumLabel.setDefaultTextColor(self.Colour)
-        PntNumLabel.setFont(QFont('Arial', 750, QFont.Light))
+        PntNumLabel.setFont(QFont('Arial', 1500, QFont.Light))
         PntNumLabel.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
         #add label to points grpahics Items
@@ -92,13 +92,15 @@ class AddPointToScene:
         CodeLabel = view.scene.addText(self.point.Code)
         CodeLabel.setPos(int(E + 250), int(N - 250))
         CodeLabel.setDefaultTextColor(self.Colour)
-        CodeLabel.setFont(QFont('Times', 750, QFont.Light))
+        CodeLabel.setFont(QFont('Times', 1500, QFont.Light))
         CodeLabel.setRotation(-45)
         CodeLabel.resetTransform()
         CodeLabel.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
         #add code label to Graphics items for point
         setattr(self.point.GraphicsItems, "CodeLabel", CodeLabel)
+
+
 
 
 class LineObjects:
@@ -146,6 +148,12 @@ class LineObjects:
         lineNum = gui.CadastralPlan.Lines.LineNum + 1
         setattr(gui.traverse.Lines, ("line"+str(lineNum)), line)
 
+        #Add bearings and distances on line
+        label = self.LinePropsLabel(line, SrcPoint, pointObj, gui)
+        setattr(line.GraphicsItems, "Label", label)
+
+
+
         gui.CadastralPlan.Lines.LineNum += 1
         gui.traverse.Lines.LineNum += 1
 
@@ -190,6 +198,46 @@ class LineObjects:
 
         gui.CadastralPlan.Lines.LineNum += 1
         gui.traverse.Lines.LineNum += 1
+
+    def LinePropsLabel(self, line, SrcPoint, pointObj, gui):
+        '''
+        Determine line properties to display bearings and distances
+        :param line:
+        :param SrcPoint:
+        :param pointObj:
+        :return:
+        '''
+
+        LinePropsStr = line.Bearing + " ~ " + str(line.Distance)
+        LineMidEasting = (SrcPoint.E + pointObj.point.E) / 2
+        LineMidNorthing = (SrcPoint.NorthingScreen + pointObj.point.NorthingScreen)/2
+        bearing = funcs.bearing2_dec(line.Bearing)
+        rotation = self.LabelRotation(bearing)
+
+        #get line equation
+        #m, b = funcs.calcLineEquation(SrcPoint.E, pointObj.point.E, SrcPoint.N, pointObj.point.N)
+        #perpencidular line equation
+        #m_perp = -1/m
+        #b_perp = m_perp*LineMidEasting - LineMidNorthing
+
+        LineLabel = gui.view.Text(LineMidEasting, LineMidNorthing, rotation, LinePropsStr)
+
+        return LineLabel
+
+
+    def LabelRotation(self, bearing):
+        '''
+        Sets rotation of line props label in QT space
+        :param bearing:
+        :return:
+        '''
+
+        if bearing >= 180:
+            rotation = bearing - 270
+        else:
+            rotation = bearing - 90
+
+        return rotation
 
 
 class CalculatePoint:

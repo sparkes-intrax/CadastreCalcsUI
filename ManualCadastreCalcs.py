@@ -15,7 +15,7 @@ from PyQt5.QtCore import Qt
 import genericFunctions as funcs
 import numpy as np
 import CadastreClasses as dataObjects
-from TraverseOperations import TraverseClose
+from TraverseOperations import TraverseClose, CreateTraverseObject
 import drawObjects
 
 from GUI_Objects import GroupBoxes, Fonts, InputObjects, ButtonObjects, ObjectStyleSheets, GraphicsView
@@ -661,28 +661,39 @@ class Window(QMainWindow):
         Calculates Points from bearing/distance and source Point
         :return:
         '''
-        try:
-            CalcChecks = DrawingChecks.CalculatePointsChecks(self, self.traverse)
-            if len(CalcChecks.CheckReply) != 0:
-                error = ""
-                for err in CalcChecks.CheckReply:
-                    error += err + "\n"
-                msg = QtWidgets.QMessageBox()
-                msg.setIcon(QtWidgets.QMessageBox.Warning)
-                msg.setText("Input Data Error For Point Calculation:")
-                msg.setInformativeText(error)
-                msg.setWindowTitle("Calculate Point Error")
-                msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
 
-                returnValue = msg.exec()
-                if returnValue == QtWidgets.QMessageBox.Ok:
-                    msg.close()
+        if not hasattr(self, "traverse"):
+            #When no traverse exists
+            NewTraverse = CreateTraverseObject.CreateTraverse()
+            if NewTraverse.CheckSourcePoint(self):
+                self.traverse = NewTraverse.NewTraverseObject(self)
+                self.CalcPointInputChecks()
             else:
-                self.CalcPoint()
-        except AttributeError:
-            MessageBoxes.NoTraverseExistsCalcPoint()
+                message = "On trying to create a new traverse,\n" \
+                          "the Selected Source Point does not exist.\n\n" \
+                          "Enter a Source Point from an already committed traverse."
+                MessageBoxes.genericMessage(message, "Source Point Error")
 
 
+        else:
+            self.CalcPointInputChecks()
+
+
+
+    def CalcPointInputChecks(self):
+        '''
+        Checks input values for point calculation
+        :return:
+        '''
+
+        CalcChecks = DrawingChecks.CalculatePointsChecks(self, self.traverse)
+        if len(CalcChecks.CheckReply) != 0:
+            error = ""
+            for err in CalcChecks.CheckReply:
+                error += err + "\n"
+            MessageBoxes.genericMessage(error, "Calculate Point Input Error")
+        else:
+            self.CalcPoint()
 
     def CalcPoint(self):
         '''
@@ -729,8 +740,9 @@ class Window(QMainWindow):
             if returnValue == QtWidgets.QMessageBox.Yes:
                 #set traverse close point ref
                 setattr(self.traverse, "EndRefPnt", CloseCheck.ClosePointRefNum)
-                self.CloseTraverse()
+                self.CloseTraverse(CloseCheck)
             else:
+                TraverseOperations.RedrawTraverse(self)
                 self.view.scene.removeItem(self.CloseIndicatorPoint)
 
         #update Point numbers on display
@@ -738,7 +750,7 @@ class Window(QMainWindow):
         self.SrcPoint.InputObj.setValue(SrcPntNum)
         self.PointNumber.InputObj.setValue(SrcPntNum+1)
 
-    def CloseTraverse(self):
+    def CloseTraverse(self, CloseCheck):
         '''
         Calculates the close for the current traverse
         - uses first and last point of travers
@@ -746,53 +758,41 @@ class Window(QMainWindow):
         '''
 
         try:
-            N_Error, E_Error, close = TraverseClose.CalcClose(self.traverse, self.CadastralPlan)
-            self.traverse.Close_PreAdjust = close
-            Colour = toleranceColour(close*1000)
+            #N_Error, E_Error, close = TraverseClose.CalcClose(self.traverse, self.CadastralPlan)
+            self.traverse.Close_PreAdjust = CloseCheck.CloseError
+            Colour = toleranceColour(CloseCheck.CloseError*1000)
 
-            returnValue = MessageBoxes.TraverseCloseInfo(close)
+            returnValue = MessageBoxes.TraverseCloseInfo(CloseCheck.CloseError)
             if returnValue == QtWidgets.QMessageBox.Yes:
                 TraverseClose.TraverseAdjustment(self.traverse, self.CadastralPlan,
-                                                                 E_Error, N_Error)
+                                                                 CloseCheck.EastError, CloseCheck.NorthError)
                 #If successful adjustment throw message to tell user
                 if self.traverse.Close_PostAdjust < 0.001:
                     MessageBoxes.TraverseSuccesfulAdjustment()
                     #Redraw Traverse with adjusted points
                     TraverseOperations.RedrawTraverse(self)
-                    self.view.scene.removeItem(self.CloseIndicatorPoint)
 
                     #Commit Traverse
                     self.CommitCurrentTraverse()
-                    self.traverse = dataObjects.Traverse(False, None)
-                    print("Commited")
+
                 else:
                     MessageBoxes.TraverseUnSuccesfulAdjustment(self.traverse.Close_PostAdjust)
 
+            else:
+                # Redraw Traverse with adjusted points
+                TraverseOperations.RedrawTraverse(self)
+                self.view.scene.removeItem(self.CloseIndicatorPoint)
+
+                # Commit Traverse
+                self.CommitCurrentTraverse()
 
 
-        except AttributeError:
-            Font = Fonts.LabelFonts()
-            msg = QtWidgets.QMessageBox()
-            msg.setIcon(QtWidgets.QMessageBox.Warning)
-            msg.setText("No Traverse to close!")
-            msg.setWindowTitle("No Traverse")
-            msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-            msg.setWindowFlags(
-                QtCore.Qt.FramelessWindowHint  # hides the window controls
-                | QtCore.Qt.SplashScreen  # this one hides it from the task bar!
-            )
-            msg.setStyleSheet("color: white; background-color: #c94134; border-radius: 30px;")
-            for button in msg.findChildren(QtWidgets.QPushButton):
-                button.setStyleSheet("color: black; background-color: yellow; border-radius: 5px;"
-                                     "border-color: silver;")
-                button.setFont(Font)
-                button.setMinimumWidth(100)
-            msg.setFont(Font)
-            msg.close()
-            returnValue = msg.exec()
 
+        except IndexError as e:
+            print(e)
 
-        #add data to CadastralPlan
+            MessageBoxes.NoTraverseError()
+
 
 
 
@@ -873,7 +873,7 @@ class Window(QMainWindow):
         '''
 
         setattr(self.CadastralPlan.Polygons, self.Polygon.LotNum, self.Polygon)
-        print("Polygon Commitetd")
+        #print("Polygon Commitetd")
 
     def bearingCheck(self, bearing):
         '''
@@ -935,12 +935,20 @@ class Window(QMainWindow):
         Commits traverse to objects
         :return:
         '''
-        try:
-            self.view.scene.removeItem(self.CloseIndicatorPoint)
-        except AttributeError:
-            pass
-        TraverseOperations.CommitTraverse(self)
-        print("")
+
+        if hasattr(self, "traverse"):
+            try:
+                self.view.scene.removeItem(self.CloseIndicatorPoint)
+            except AttributeError:
+                pass
+            TraverseOperations.CommitTraverse(self)
+            # remove traverse attribute
+            delattr(self, "traverse")
+        else:
+            message = "No traverse to commit!"
+            MessageBoxes.genericMessage(message, "Traverse Commit Error.")
+
+        #print("")
 
     def NewTraverse(self):
         '''

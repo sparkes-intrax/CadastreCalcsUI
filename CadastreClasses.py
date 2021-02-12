@@ -17,7 +17,7 @@ class CadastralPlan:
 
         self.Points = Points()
         self.Lines = Lines()
-        self.Arcs = Arcs()
+        #self.Arcs = Arcs()
         self.Polygons = Polygons()
         self.Labels = Labels()
         self.Traverses = Traverses()
