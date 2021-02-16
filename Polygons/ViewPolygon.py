@@ -228,7 +228,7 @@ class Dialog(QDialog):
         #Add text input box
         self.Input = QtWidgets.QLineEdit(self)
         self.Input.setText("")
-        self.Input.setStyleSheet("color: white;")
+        self.Input.setStyleSheet("color: black; background-color:white")
         self.Input.setFont(Font)
         self.layout.addWidget(self.Input)
         self.setLayout(self.layout)
@@ -381,6 +381,8 @@ class ColourObjects:
             LineObj = gui.CadastralPlan.Lines.__getattribute__(key)
             #check if lineobj matches line segment of polygon
             if pointS == LineObj.StartRef and pointE == LineObj.EndRef:
+                return LineObj.GraphicsItems.Line
+            elif pointE == LineObj.StartRef and pointS == LineObj.EndRef:
                 return LineObj.GraphicsItems.Line
         '''
         #check arcs

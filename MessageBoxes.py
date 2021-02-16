@@ -3,7 +3,73 @@ Functions to throw message boxes from form
 '''
 
 from PyQt5 import QtWidgets, QtCore
+from PyQt5.QtCore import QThreadPool, QRunnable, pyqtSlot, QObject, pyqtSignal
+
 from GUI_Objects import Fonts
+
+#def CallMessageBox(args):
+'''
+Calls message box in a worker function
+
+:param args: 
+:return: 
+'''
+
+class WorkerSignals(QObject):
+    """
+    Defines the signals available from a running worker thread.
+    Supported signals are:
+    finished
+    No data
+    error
+    `str` Exception string
+    result
+    `dict` data returned from processing
+    """
+    finished = pyqtSignal()
+    error = pyqtSignal(str)
+    result = pyqtSignal(dict)
+
+class Worker(QRunnable):
+
+    def __init__(self, args):
+        super().__init__()
+        self.args = args
+        self.signals = WorkerSignals()
+
+    @pyqtSlot()
+    def run(self):
+        Font = Fonts.LabelFonts()
+        msg = QtWidgets.QMessageBox()
+
+        #set message icon
+        if self.args.Icon == "Information":
+            msg.setIcon(QtWidgets.QMessageBox.Information)
+        elif self.args.Icon == "Warning":
+            msg.setIcon(QtWidgets.QMessageBox.Warning)
+        elif self.args.Icon == "Question":
+            msg.setIcon(QtWidgets.QMessageBox.Question)
+
+        msg.setWindowTitle(self.args.Title)
+        msg.setText(self.args.TextStr)
+
+        #set buttons
+        if "OK" in self.args.Buttons:
+            msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        elif "CANCEL" in self.args.Buttons:
+            msg.setStandardButtons(QtWidgets.QMessageBox.Cancel)
+        elif "YES" in self.args.Buttons:
+            msg.setStandardButtons(QtWidgets.QMessageBox.Yes)
+        elif "NO" in self.args.Buttons:
+            msg.setStandardButtons(QtWidgets.QMessageBox.No)
+        msg = messageBoxFormat(msg)
+
+        retval = msg.exec_()
+
+        self.signals.finished.emit()
+        self.signals.result.emit({"Return": retval})
+
+
 
 def EnterPointAlert():
     # Warn user that entering point starts a new traverse
@@ -15,7 +81,7 @@ def EnterPointAlert():
                            "Are you sure you want to start a new traverse?\n\n"
                            "Click Ok to continue with Enter Point")
     msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
-    msg = messgaeBoxFormat(msg)
+    msg = messageBoxFormat(msg)
 
     retval = msg.exec_()
 
@@ -30,7 +96,7 @@ def CommitTraverseBeforeReset():
     msg.setInformativeText("Do you want to commit current traverse?\n\n"
                            "If you select 'NO' the current traverse will be deleted!\n")
     msg.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
-    msg = messgaeBoxFormat(msg)
+    msg = messageBoxFormat(msg)
 
     retval = msg.exec_()
 
@@ -46,7 +112,7 @@ def TraverseCloseInfo(close):
     msg.setInformativeText("\n\nDo you want to apply a transit adjustment to force traverse to close?")
     msg.setWindowTitle("Traverse Close Error")
     msg.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
-    msg = messgaeBoxFormat(msg)
+    msg = messageBoxFormat(msg)
     returnValue = msg.exec()
 
     return returnValue
@@ -61,7 +127,7 @@ def TraverseSuccesfulAdjustment():
     msg.setInformativeText("\nTraverse will be commited to the CadastralPlan.")
     msg.setWindowTitle("Traverse Adjusted")
     msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-    msg = messgaeBoxFormat(msg)
+    msg = messageBoxFormat(msg)
     returnValue = msg.exec()
 
 def TraverseUnSuccesfulAdjustment(close):
@@ -73,7 +139,7 @@ def TraverseUnSuccesfulAdjustment(close):
                 "After adjustment close was: " + str(round(close * 1000, 1)) + "mm")
     msg.setWindowTitle("Traverse Close Error")
     msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-    msg = messgaeBoxFormat(msg)
+    msg = messageBoxFormat(msg)
     returnValue = msg.exec()
 
 def CloseDetectedMessage(CloseCheck):
@@ -94,7 +160,7 @@ def CloseDetectedMessage(CloseCheck):
     msg.setInformativeText(msgStr)
     msg.setWindowTitle("Traverse Close Detected")
     msg.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
-    msg = messgaeBoxFormat(msg)
+    msg = messageBoxFormat(msg)
     returnValue = msg.exec()
 
     return returnValue
@@ -107,7 +173,7 @@ def PolygonRefPointError(RefPoint):
     msg.setText("Point Number " + str(RefPoint) + " does not exist!\n\n"
                                                   "Only Enter Point Numbers from Committed Traverses.")
     msg.setGeometry(500, 600, 400, 100)
-    msg = messgaeBoxFormat(msg)
+    msg = messageBoxFormat(msg)
     # msg.setStyleSheet("QButton{background-color: #3700B3")
     retval = msg.exec_()
 
@@ -121,7 +187,7 @@ def NoTraverseExistsCalcPoint():
                            "enter a point to start the traverse from")
     msg.setWindowTitle("No Traverse Exists")
     msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-    msg = messgaeBoxFormat(msg)
+    msg = messageBoxFormat(msg)
 
     returnValue = msg.exec()
 
@@ -132,7 +198,7 @@ def CalcPointChecksError(error):
     msg.setInformativeText(error)
     msg.setWindowTitle("Calculate Point Error")
     msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-    msg = messgaeBoxFormat(msg)
+    msg = messageBoxFormat(msg)
     returnValue = msg.exec()
     if returnValue == QtWidgets.QMessageBox.Ok:
         msg.close()
@@ -143,7 +209,7 @@ def NoTraverseError():
     msg.setText("No Traverse Exists!")
     msg.setWindowTitle("No Traverse Error")
     msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-    msg = messgaeBoxFormat(msg)
+    msg = messageBoxFormat(msg)
     returnValue = msg.exec()
     if returnValue == QtWidgets.QMessageBox.Ok:
         msg.close()
@@ -155,13 +221,13 @@ def genericMessage(mes, title):
     #msg.setInformativeText(error)
     msg.setWindowTitle(title)
     msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-    msg = messgaeBoxFormat(msg)
+    msg = messageBoxFormat(msg)
     returnValue = msg.exec()
     if returnValue == QtWidgets.QMessageBox.Ok:
         msg.close()
 
 
-def messgaeBoxFormat(msg):
+def messageBoxFormat(msg):
     Font = Fonts.LabelFonts()
     msg.setWindowFlags(
         QtCore.Qt.FramelessWindowHint  # hides the window controls
@@ -176,3 +242,11 @@ def messgaeBoxFormat(msg):
         button.setMinimumWidth(100)
 
     return msg
+
+class MessageBoxArgs:
+
+    def __init__(self, title, TextStr, icon, buttons):
+        self.Title = title
+        self.TextStr = TextStr
+        self.Icon = icon
+        self.Buttons = buttons

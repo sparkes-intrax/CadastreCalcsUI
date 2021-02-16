@@ -56,7 +56,7 @@ class Lines:
         self.LineNum = 0
 
 class Line():
-    def __init__(self, StartRef, EndRef, Layer, distance, deltaE, deltaN, bearing):
+    def __init__(self, StartRef, EndRef, Layer, distance, deltaE, deltaN, bearing, Colour):
         '''
         Line object to store refpoints for start and end of line - and layer of line
         - refpoints reference Points
@@ -74,6 +74,7 @@ class Line():
         self.deltaN = deltaN
         self.Bearing = bearing
         self.BoundingRect = None
+        self.Colour = Colour
         self.GraphicsItems = TraverseGraphItem()
 
 
@@ -87,7 +88,7 @@ class Arcs:
 
 class Arc():
     def __init__(self, StartRef, EndRef, Layer, radius, centreEast, centreNorth,
-                 rotation, distance, bearing, deltaE, deltaN):
+                 rotation, distance, bearing, deltaE, deltaN, Colour):
         '''
         Line object to store refpoints for start and end of line - and layer of line
         - refpoints reference Points
@@ -108,6 +109,7 @@ class Arc():
         self.Bearing = bearing
         self.BoundingRect = None
         self.GraphicsItems = TraverseGraphItem()
+        self.Colour = Colour
         self.deltaE = deltaE  # these are adjusted during traverse adjustment and used to calc line distances
         self.deltaN = deltaN
 

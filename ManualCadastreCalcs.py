@@ -11,7 +11,7 @@ from PyQt5 import QtGui, QtWidgets, QtCore
 from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsView, QGraphicsItem, QGraphicsTextItem
 import sys
 from PyQt5.QtGui import QBrush, QPen, QWheelEvent, QMouseEvent
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QThreadPool
 import genericFunctions as funcs
 import numpy as np
 import CadastreClasses as dataObjects
@@ -58,12 +58,16 @@ class Window(QMainWindow):
         sets up the CadastralPlan parent class
         :return:
         '''
+        #a list of codes to always start a new traverse
+        #RMs that are dead ends - RMDHW etc
+        self.CodeList = ["RMDHW", "RMGIP", "RMCB", "RMPLUG", "RMNAIL",
+                         "ROCK"]
         return dataObjects.CadastralPlan()
 
 
     def InitWindow(self):
 
-        self.view = GraphicsView.GuiDrawing()
+        self.view = GraphicsView.GuiDrawing(self)
         self.groupBox_Drawing.Layout.addWidget(self.view)
 
 
@@ -72,6 +76,9 @@ class Window(QMainWindow):
         self.setGeometry(self.top, self.left, self.width, self.height)
         self.setStyleSheet("background-color: %s;" % "#171F24")
         self.show()
+
+        self.threadpool = QThreadPool()
+        #self.worker = MessageBoxes.Worker()
 
     def AddMenuBar(self):
         '''
@@ -102,17 +109,20 @@ class Window(QMainWindow):
         ToolBar = self.addToolBar("MouseAction")
         self.pointer = QtWidgets.QAction(self)
         self.pointer.setText("Pointer")
-        self.pointer.setIcon(QtGui.QIcon("cursor.ico"))
+        self.pointer.setIcon(QtGui.QIcon("PointerIcon.ico"))
         self.pointer.triggered.connect(self.mousePointFunction)
-        PointTip = "Pointer"
+        self.pointer.setCheckable(True)
+        self.pointer.setChecked(True)
+        PointTip = "Select Items"
         self.pointer.setStatusTip(PointTip)
         self.pointer.setToolTip(PointTip)
         ToolBar.addAction(self.pointer)
 
         self.dragAction = QtWidgets.QAction(self)
         self.dragAction.setText("&Drag")
-        self.dragAction.setIcon(QtGui.QIcon("drag.ico"))
+        self.dragAction.setIcon(QtGui.QIcon("PanIcon.ico"))
         self.dragAction.triggered.connect(self.mouseDragFunction)
+        self.dragAction.setCheckable(True)
         dragTip = "Pan"
         self.dragAction.setStatusTip(dragTip)
         self.dragAction.setToolTip(dragTip)
@@ -120,23 +130,80 @@ class Window(QMainWindow):
 
         self.BoxSelectionAction = QtWidgets.QAction(self)
         self.BoxSelectionAction.setText("Select By Area")
-        self.BoxSelectionAction.setIcon(QtGui.QIcon("SelectByArea.ico"))
+        self.BoxSelectionAction.setIcon(QtGui.QIcon("RectangleSelection.ico"))
         self.BoxSelectionAction.triggered.connect(self.mouseSelectFunction)
+        self.BoxSelectionAction.setCheckable(True)
         Tip = "Select By Area"
         self.BoxSelectionAction.setStatusTip(Tip)
         self.BoxSelectionAction.setToolTip(Tip)
         ToolBar.addAction(self.BoxSelectionAction)
 
-        self.ViewLineParamsAction = QtWidgets.QAction(self)
-        self.ViewLineParamsAction.setText("View Line Params\non selection")
-        self.ViewLineParamsAction.setIcon(QtGui.QIcon("Surveyor.ico"))
-        Tip = "View line bearing and distance on selection"
-        self.ViewLineParamsAction.setStatusTip(Tip)
-        self.ViewLineParamsAction.setToolTip(Tip)
-        self.ViewLineParamsAction.triggered.connect(self.ShowLineParams)
-        ToolBar.addAction(self.ViewLineParamsAction)
+        self.MeasureAction = QtWidgets.QAction(self)
+        self.MeasureAction.setText("Measure Selection")
+        self.MeasureAction.setIcon(QtGui.QIcon("MeasureIcon.ico"))
+        self.MeasureAction.triggered.connect(self.mouseMeasureFunction)
+        self.MeasureAction.setCheckable(True)
+        Tip = "Measure & Inquire Items"
+        self.MeasureAction.setStatusTip(Tip)
+        self.MeasureAction.setToolTip(Tip)
+        ToolBar.addAction(self.MeasureAction)
+
+        self.JoinPointsAction = QtWidgets.QAction(self)
+        self.JoinPointsAction.setText("Join points")
+        self.JoinPointsAction.setIcon(QtGui.QIcon("JoinPointsIcon.ico"))
+        Tip = "Create Line between points"
+        self.JoinPointsAction.setStatusTip(Tip)
+        self.JoinPointsAction.setToolTip(Tip)
+        self.JoinPointsAction.setCheckable(True)
+        self.JoinPointsAction.triggered.connect(self.mouseJoinPointsFunction)
+        ToolBar.addAction(self.JoinPointsAction)
         ToolBar.setStyleSheet(style)
 
+        self.InsertPointsAction = QtWidgets.QAction(self)
+        self.InsertPointsAction.setText("Insert points")
+        self.InsertPointsAction.setIcon(QtGui.QIcon("InsertPointsIcon.ico"))
+        Tip = "Inserts a traverse side at selected point"
+        self.InsertPointsAction.setStatusTip(Tip)
+        self.InsertPointsAction.setToolTip(Tip)
+        self.InsertPointsAction.setCheckable(True)
+        self.InsertPointsAction.triggered.connect(self.mouseInsertPointsFunction)
+        ToolBar.addAction(self.InsertPointsAction)
+        ToolBar.setStyleSheet(style)
+        
+        self.ParrallelLineAction = QtWidgets.QAction(self)
+        self.ParrallelLineAction.setText("Parrallel")
+        self.ParrallelLineAction.setIcon(QtGui.QIcon("ParrallelLineIcon.ico"))
+        Tip = "Creates A Parrallel Line to selected line"
+        self.ParrallelLineAction.setStatusTip(Tip)
+        self.ParrallelLineAction.setToolTip(Tip)
+        self.ParrallelLineAction.setCheckable(True)
+        self.ParrallelLineAction.triggered.connect(self.mouseParrallelLineFunction)
+        ToolBar.addAction(self.ParrallelLineAction)
+        ToolBar.setStyleSheet(style)
+
+        self.TrimLineAction = QtWidgets.QAction(self)
+        self.TrimLineAction.setText("Trims")
+        self.TrimLineAction.setIcon(QtGui.QIcon("TrimIcon.ico"))
+        Tip = "Trims Line"
+        self.TrimLineAction.setStatusTip(Tip)
+        self.TrimLineAction.setToolTip(Tip)
+        self.TrimLineAction.setCheckable(True)
+        self.TrimLineAction.triggered.connect(self.mouseTrimLineFunction)
+        ToolBar.addAction(self.TrimLineAction)
+        ToolBar.setStyleSheet(style)
+
+        self.IntersectionPointAction = QtWidgets.QAction(self)
+        self.IntersectionPointAction.setText("Intersection point")
+        self.IntersectionPointAction.setIcon(QtGui.QIcon("IntersectionPointIcon.ico"))
+        Tip = "Calcs intersection point between 2 selected lines"
+        self.IntersectionPointAction.setStatusTip(Tip)
+        self.IntersectionPointAction.setToolTip(Tip)
+        self.IntersectionPointAction.setCheckable(True)
+        self.IntersectionPointAction.triggered.connect(self.mouseIntersectionPointFunction)
+        ToolBar.addAction(self.IntersectionPointAction)
+        ToolBar.setStyleSheet(style)
+
+        ToolBar.setIconSize(QtCore.QSize(50, 50))
         self.addToolBar(Qt.LeftToolBarArea, ToolBar)
 
     def AddGroupBoxes(self):
@@ -147,7 +214,7 @@ class Window(QMainWindow):
 
         #Drawing GroupBox
         Font = Fonts.MajorGroupBox()
-        rect = QtCore.QRect(50, 150, 1050, 830)
+        rect = QtCore.QRect(70, 150, 1030, 830)
         self.groupBox_Drawing = GroupBoxes.GUI_GroupBox(rect, "", "Drawing", Font,
                                                        "Grid", self, "#171F24", "#171F24")
         #Points main groupbox
@@ -200,7 +267,7 @@ class Window(QMainWindow):
                                                           Font, "Grid", self,
                                                           "white", "#171F24")
         #Traverse GroupBox
-        rect = QtCore.QRect(50, 30, 1050, 90)
+        rect = QtCore.QRect(70, 30, 1030, 90)
 
         self.groupBox_Traverses = GroupBoxes.GUI_GroupBox(rect, "Traverse Functions",
                                                           "Traverses", Font, "Grid",
@@ -313,10 +380,12 @@ class Window(QMainWindow):
 
         #Point Code calculation Label and Input
         Font = Fonts.LabelFonts()
+        ComboBoxItems = ["RMSSM", "RMPM", "RMDHW", "RMGIP", "RMCB", "RMPLUG", "RMNAIL",
+                         "ROCK"]
         self.PointCode = InputObjects.InputObjects(self.groupBox_PointInfo,
                                                       "Point Code", "Code", Font,
                                                       "#03DAC5", "#171F24",
-                                                      "QLineEdit", None, None, "white",
+                                                      "QLineEdit", ComboBoxItems, Font, "white",
                                                       "#3a4f5c", 150, 20, 1, 0, 2)
 
         # Point Layer
@@ -425,25 +494,25 @@ class Window(QMainWindow):
         Font = Fonts.ButtonFont()
         self.NewTraverseButton = ButtonObjects.Add_QButton(self.groupBox_Traverses, "New / Reset Traverse",
                                                         "NewTravButton", Font,
-                                                        self.NewTraverse, 200, 30,
+                                                        self.NewTraverse, 100, 50,
                                                         1, 0, 1, 1, "#3700B3", "white", "#90adf0")
 
         #CLose Traverse Button
         self.TravCloseButton = ButtonObjects.Add_QButton(self.groupBox_Traverses, "Close Traverse",
                                                         "CloseTravButton", Font,
-                                                        self.TraverseClose, 200, 30,
+                                                        self.TraverseClose, 100, 50,
                                                         1, 1, 1, 1, "#3700B3", "white", "#90adf0")
 
         # Commit Traverse Button
         self.CommitTraverse = ButtonObjects.Add_QButton(self.groupBox_Traverses, "Commit Traverse",
                                                         "CommitTravButton", Font,
-                                                        self.CommitCurrentTraverse, 200, 30,
+                                                        self.CommitCurrentTraverse, 100, 50,
                                                         1, 2, 1, 1, "#3700B3", "white", "#90adf0")
 
         # Show Traverse Button
         self.ShowTraverse = ButtonObjects.Add_QButton(self.groupBox_Traverses, "Show Traverses",
                                                         "ShowTravButton", Font,
-                                                        TraverseOperations.CommitTraverse, 200, 30,
+                                                        TraverseOperations.CommitTraverse, 100, 50,
                                                         1, 3, 1, 1, "#3700B3", "white", "#90adf0")
 
     #################################################################################################
@@ -463,6 +532,15 @@ class Window(QMainWindow):
         if modifiers == (QtCore.Qt.ControlModifier) and event.key() == Qt.Key_A:
             print("Clicked")
 
+        if modifiers == (QtCore.Qt.ControlModifier) and event.key() == Qt.Key_Z:
+            print("Clicked")
+
+        if event.key() == Qt.Key_Escape and \
+                self.view.JoinPoints and \
+                self.view.CurrentPoint is not None:
+            self.view.CurrentPoint = None
+            self.view.scene.removeItem(self.view.MouseLine.mouseLine)
+
 
     def deleteSelectedObject(self):
         '''
@@ -475,9 +553,15 @@ class Window(QMainWindow):
 
             #remove items from traverse
             if itemType == QtWidgets.QGraphicsLineItem:
-                self.traverse.Lines = self.removeFromTraverse(rect, self.traverse.Lines)
+                try:
+                    self.traverse.Lines = self.removeFromTraverse(rect, self.traverse.Lines)
+                except AttributeError:
+                    pass
             elif itemType == QtWidgets.QGraphicsEllipseItem:
-                self.traverse.Points = self.removeFromTraverse(rect, self.traverse.Points)
+                try:
+                    self.traverse.Points = self.removeFromTraverse(rect, self.traverse.Points)
+                except AttributeError:
+                    pass
 
             #remove items from display
             self.view.scene.removeItem(item)
@@ -509,12 +593,16 @@ class Window(QMainWindow):
         for key in DeleteKeys:
             #delete points associated labels
             if hasattr(object.__getattribute__(key).GraphicsItems, "PointNumLabel"):
-                self.view.scene.removeItem(object.__getattribute__(key).GraphicsItems.PointNumLabel)
+                item = object.__getattribute__(key).GraphicsItems.PointNumLabel
+                self.view.scene.removeItem(item)
+                index = self.traverse.refPnts.index(key)
+                del self.traverse.refPnts[index]
             if hasattr(object.__getattribute__(key).GraphicsItems, "CodeLabel"):
                 self.view.scene.removeItem(object.__getattribute__(key).GraphicsItems.CodeLabel)
             object.__delattr__(key)
 
         return object
+
     """
     def wheelEvent(self, event: QWheelEvent):
         
@@ -560,11 +648,10 @@ class Window(QMainWindow):
         self.view.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.view.setResizeAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
 
-
+    
     def mousePressEvent(self, event: QMouseEvent):
 
-        items = self.scene.selectedItems()
-        self.view.items()
+        items = self.view.scene.selectedItems()
         try:
             item = self.view.itemAt(event.pos())
             #print(item.type())
@@ -575,7 +662,7 @@ class Window(QMainWindow):
             print(sys.exc_info()[0])
             print(sys.exc_info()[1])
             print(sys.exc_info()[2])
-
+    
     def updateView(self):
 
         #print(self.zoom)
@@ -585,18 +672,108 @@ class Window(QMainWindow):
             print(e)
     """
     def mousePointFunction(self):
+        self.BoxSelectionAction.setChecked(False)
+        self.InsertPointsAction.setChecked(False)
+        self.JoinPointsAction.setChecked(False)
+        self.dragAction.setChecked(False)
+        self.MeasureAction.setChecked(False)
+        self.pointer.setChecked(True)
         self.view.mousePointFunction()
         #self.view.ShowSelectedParams = False
 
     def mouseDragFunction(self):
+        self.BoxSelectionAction.setChecked(False)
+        self.InsertPointsAction.setChecked(False)
+        self.JoinPointsAction.setChecked(False)
+        self.pointer.setChecked(False)
+        self.MeasureAction.setChecked(False)
+        self.dragAction.setChecked(True)
         self.view.mouseDragFunction()
         #self.view.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
         #self.view.ShowSelectedParams = False
 
     def mouseSelectFunction(self):
+        self.InsertPointsAction.setChecked(False)
+        self.JoinPointsAction.setChecked(False)
+        self.pointer.setChecked(False)
+        self.dragAction.setChecked(False)
+        self.BoxSelectionAction.setChecked(True)
+        self.MeasureAction.setChecked(False)
+        self.ParrallelLineAction.setChecked(False)
+        self.TrimLineAction.setChecked(False)
+        self.IntersectionPointAction.setChecked(False)
+        
         self.view.mouseSelectFunction()
         #self.view.setDragMode(QtWidgets.QGraphicsView.RubberBandDrag)
         #self.view.ShowSelectedParams = False
+    def mouseMeasureFunction(self):
+        self.InsertPointsAction.setChecked(False)
+        self.BoxSelectionAction.setChecked(False)
+        self.JoinPointsAction.setChecked(False)
+        self.pointer.setChecked(False)
+        self.dragAction.setChecked(False)
+        self.MeasureAction.setChecked(True)
+        self.ParrallelLineAction.setChecked(False)
+        self.TrimLineAction.setChecked(False)
+        self.IntersectionPointAction.setChecked(False)
+        self.view.mouseMeasureFunction()
+
+    def mouseJoinPointsFunction(self):
+        self.InsertPointsAction.setChecked(False)
+        self.pointer.setChecked(False)
+        self.dragAction.setChecked(False)
+        self.BoxSelectionAction.setChecked(False)
+        self.JoinPointsAction.setChecked(True)
+        self.MeasureAction.setChecked(False)
+        self.ParrallelLineAction.setChecked(False)
+        self.TrimLineAction.setChecked(False)
+        self.IntersectionPointAction.setChecked(False)
+        self.view.mouseJoinPointsFunction()
+
+    def mouseInsertPointsFunction(self):
+        self.JoinPointsAction.setChecked(False)
+        self.pointer.setChecked(False)
+        self.dragAction.setChecked(False)
+        self.BoxSelectionAction.setChecked(False)
+        self.InsertPointsAction.setChecked(True)
+        self.MeasureAction.setChecked(False)
+        self.ParrallelLineAction.setChecked(False)
+        self.TrimLineAction.setChecked(False)
+        self.IntersectionPointAction.setChecked(False)
+        self.view.mouseInsertPointsFunction()
+
+    def mouseParrallelLineFunction(self):
+        self.JoinPointsAction.setChecked(False)
+        self.pointer.setChecked(False)
+        self.dragAction.setChecked(False)
+        self.BoxSelectionAction.setChecked(False)
+        self.InsertPointsAction.setChecked(False)
+        self.MeasureAction.setChecked(False)
+        self.ParrallelLineAction.setChecked(True)
+        self.TrimLineAction.setChecked(False)
+        self.IntersectionPointAction.setChecked(False)
+
+    def mouseTrimLineFunction(self):
+        self.JoinPointsAction.setChecked(False)
+        self.pointer.setChecked(False)
+        self.dragAction.setChecked(False)
+        self.BoxSelectionAction.setChecked(False)
+        self.InsertPointsAction.setChecked(False)
+        self.MeasureAction.setChecked(False)
+        self.ParrallelLineAction.setChecked(False)
+        self.TrimLineAction.setChecked(True)
+        self.IntersectionPointAction.setChecked(False)
+
+    def mouseIntersectionPointFunction(self):
+        self.JoinPointsAction.setChecked(False)
+        self.pointer.setChecked(False)
+        self.dragAction.setChecked(False)
+        self.BoxSelectionAction.setChecked(False)
+        self.InsertPointsAction.setChecked(False)
+        self.MeasureAction.setChecked(False)
+        self.ParrallelLineAction.setChecked(False)
+        self.TrimLineAction.setChecked(False)
+        self.IntersectionPointAction.setChecked(True)
 
     def ShowLineParams(self):
         self.ShowSelectedParams = True
@@ -609,8 +786,16 @@ class Window(QMainWindow):
         Called from Enter Point click event
         :return:
         '''
-
-
+        """
+        message = "Enter Point will start a new traverse.\n" \
+                  "Are you sure you want to start a new traverse?\n\n" \
+                  "Click Ok to continue with Enter Point"
+        MessageBoxArgs = MessageBoxes.MessageBoxArgs("Enter Point Warning!",
+                                                     message, "Warning", ["OK", "CANCEL"])
+        worker = MessageBoxes.Worker(MessageBoxArgs)
+        self.threadpool.start(worker)
+        worker.signals.finished.connect(self.worker_complete)
+        """
         retval = MessageBoxes.EnterPointAlert()
         #User wants to create a new traverse
         if retval == QtWidgets.QMessageBox.Ok:
@@ -661,8 +846,8 @@ class Window(QMainWindow):
         Calculates Points from bearing/distance and source Point
         :return:
         '''
-
-        if not hasattr(self, "traverse"):
+        Code = self.PointCode.InputObj.text()
+        if not hasattr(self, "traverse") or Code in self.CodeList:
             #When no traverse exists
             NewTraverse = CreateTraverseObject.CreateTraverse()
             if NewTraverse.CheckSourcePoint(self):
@@ -709,46 +894,51 @@ class Window(QMainWindow):
                                                     pointObj.Params.Layer)
         setattr(self.traverse.Points, pointObj.Params.PntNum, pointSceneObj.point)
         self.traverse.refPnts.append(pointObj.Params.PntNum)
+        #If dead end traverse to a RM add point to CadastralPlan
+
 
         #add linework to data objects and draw on screen
         LinesPoints.LineObjects(pointObj, self)
 
-        #Check if calculated point is close enough for a close
-        CloseCheck = TraverseOperations.CheckTraverseClose(pointObj.point, self.traverse,
-                                                           self.CadastralPlan)
+        if pointObj.point.Code in self.CodeList:
+            setattr(self.CadastralPlan.Points, pointObj.Params.PntNum, pointSceneObj.point)
+        else:
+            #Check if calculated point is close enough for a close
+            CloseCheck = TraverseOperations.CheckTraverseClose(pointObj.point, self.traverse,
+                                                               self.CadastralPlan)
 
-        if CloseCheck.Close:
-            #show close error marker with colour coding
-            point = pointObj.__getattribute__("point")
-            E = point.E*1000
-            N = point.NorthingScreen*1000
-            CloseColour = toleranceColour(CloseCheck.CloseError * 1000)
-            PenColor = QtGui.QColor("silver")
-            Pen = QPen(PenColor)
-            Pen.setWidth(500)
-            Brush = QBrush(CloseColour)
-            self.CloseIndicatorPoint = QtWidgets.QGraphicsEllipseItem((E - 3000), (N - 3000), 6000, 6000)
-            self.CloseIndicatorPoint.setPen(Pen)
-            self.CloseIndicatorPoint.setBrush(Brush)
-            self.CloseIndicatorPoint.setFlag(QGraphicsItem.ItemIsSelectable, True)
-            self.CloseIndicatorPoint = self.view.Point(E, N, 6000, Pen, Brush)
-            # linewidth for displayed travers
-            lineWidth = 1000
-            #chnage colour of traverse to indicator colour
-            TraverseOperations.ColourTraverseObjects(self, lineWidth, CloseColour)
-            returnValue = MessageBoxes.CloseDetectedMessage(CloseCheck)
-            if returnValue == QtWidgets.QMessageBox.Yes:
-                #set traverse close point ref
-                setattr(self.traverse, "EndRefPnt", CloseCheck.ClosePointRefNum)
-                self.CloseTraverse(CloseCheck)
-            else:
-                TraverseOperations.RedrawTraverse(self)
-                self.view.scene.removeItem(self.CloseIndicatorPoint)
+            if CloseCheck.Close:
+                #show close error marker with colour coding
+                point = pointObj.__getattribute__("point")
+                E = point.E*1000
+                N = point.NorthingScreen*1000
+                CloseColour = toleranceColour(CloseCheck.CloseError * 1000)
+                PenColor = QtGui.QColor("silver")
+                Pen = QPen(PenColor)
+                Pen.setWidth(500)
+                Brush = QBrush(CloseColour)
+                self.CloseIndicatorPoint = QtWidgets.QGraphicsEllipseItem((E - 3000), (N - 3000), 6000, 6000)
+                self.CloseIndicatorPoint.setPen(Pen)
+                self.CloseIndicatorPoint.setBrush(Brush)
+                self.CloseIndicatorPoint.setFlag(QGraphicsItem.ItemIsSelectable, True)
+                self.CloseIndicatorPoint = self.view.Point(E, N, 6000, Pen, Brush)
+                # linewidth for displayed travers
+                lineWidth = 1000
+                #chnage colour of traverse to indicator colour
+                TraverseOperations.ColourTraverseObjects(self, lineWidth, CloseColour)
+                returnValue = MessageBoxes.CloseDetectedMessage(CloseCheck)
+                if returnValue == QtWidgets.QMessageBox.Yes:
+                    #set traverse close point ref
+                    setattr(self.traverse, "EndRefPnt", CloseCheck.ClosePointRefNum)
+                    self.CloseTraverse(CloseCheck)
+                else:
+                    TraverseOperations.RedrawTraverse(self)
+                    self.view.scene.removeItem(self.CloseIndicatorPoint)
 
-        #update Point numbers on display
-        SrcPntNum = int(pointObj.Params.PntNum)
-        self.SrcPoint.InputObj.setValue(SrcPntNum)
-        self.PointNumber.InputObj.setValue(SrcPntNum+1)
+            #update Point numbers on display
+            SrcPntNum = int(pointObj.Params.PntNum)
+            self.SrcPoint.InputObj.setValue(SrcPntNum)
+            self.PointNumber.InputObj.setValue(SrcPntNum+1)
 
     def CloseTraverse(self, CloseCheck):
         '''
@@ -936,7 +1126,7 @@ class Window(QMainWindow):
         :return:
         '''
 
-        if hasattr(self, "traverse"):
+        if hasattr(self, "traverse") and len(self.traverse.Points.__dict__.keys())>0:
             try:
                 self.view.scene.removeItem(self.CloseIndicatorPoint)
             except AttributeError:
@@ -963,6 +1153,12 @@ class Window(QMainWindow):
     def TraverseClose(self):
 
         self.CloseTraverse()
+
+    def worker_complete(self, button):
+        self.ButtonEvent = button
+
+    def JoinPoints(self):
+        PointsJoin = True
 
 
 

@@ -4,11 +4,14 @@ Set of functions and methods to process Traverse operations
 
 import CadastreClasses as DataObjects
 from numpy import sqrt
+from PyQt5 import QtCore
 from PyQt5.QtGui import QPen, QBrush
-from PyQt5.QtWidgets import QGraphicsItem
+from PyQt5.QtWidgets import QGraphicsItem, QDialog, QPushButton, QLabel, QLineEdit, QComboBox
 from DrawingObjects import LinesPoints
 import genericFunctions as funcs
 from DrawingObjects import Arcs
+import MessageBoxes
+from GUI_Objects import ObjectStyleSheets, Fonts, GroupBoxes
 
 def NewTraverse(layer, StartRefPnt, FirstTraverse, point):
     '''
@@ -104,10 +107,10 @@ class CommitTraverse:
             if key == "LineNum":
                 continue
             Line = Lines.__getattribute__(key)
-            CadastralClasses = DataObjects.CadastralPlan()
-            if Line.__class__.__name__ == "Line":
-                lineNum = str(len(CadastralPlan.Lines.__dict__.keys()))
-                setattr(CadastralPlan.Lines, ("Line_" + lineNum), Line)
+            #CadastralClasses = DataObjects.CadastralPlan()
+            #if Line.__class__.__name__ == "Line":
+            lineNum = str(len(CadastralPlan.Lines.__dict__.keys()))
+            setattr(CadastralPlan.Lines, ("Line" + lineNum), Line)
 
         return CadastralPlan
     
@@ -161,7 +164,7 @@ class CommitTraverse:
             EndPoint = Line.EndRef
             EndPointLayer = Points.__getattribute__(EndPoint).Layer
             LineProps = LinesPoints.LinePointProperties()
-            Pen, Layer = LineProps.SetLineProperties(EndPointLayer, SrcPointLayer)
+            Pen, Layer, colour = LineProps.SetLineProperties(EndPointLayer, SrcPointLayer)
             if LineType == "Line":
                 Line.GraphicsItems.Line.setPen(Pen)
             else:
@@ -452,13 +455,15 @@ class RedrawTraverse:
 
             # Get Line Props
             LineProps = LinesPoints.LinePointProperties()
-            LinePen, Layer = LineProps.SetLineProperties(PointE.Layer,
+            LinePen, Layer, colour = LineProps.SetLineProperties(PointE.Layer,
                                                          PointS.Layer)
 
             if Line.type == "Line":
-                self.AddLine(Line, LinePen, PointS, PointE, gui)
+                GraphLine = self.AddLine(Line, LinePen, PointS, PointE, gui)
+                setattr(Line, "BoundingRect", GraphLine.boundingRect())
             else:
-                self.AddArc(Line, LinePen, PointS, PointE, gui)
+                GraphLine = self.AddArc(Line, LinePen, PointS, PointE, gui)
+                setattr(Line, "BoundingRect", GraphLine.boundingRect())
 
 
     def AddLine(self, Line, LinePen, PointS, PointE, gui):
@@ -474,6 +479,8 @@ class RedrawTraverse:
         GraphLine = gui.view.Line(int(PointS.E*1000), int(PointS.NorthingScreen*1000),
                                   int(PointE.E*1000), int(PointE.NorthingScreen*1000), LinePen)
         setattr(Line.GraphicsItems, "Line", GraphLine)
+
+        return GraphLine
 
     def AddArc(self, Line, LinePen, PointS, PointE, gui):
         '''
@@ -502,8 +509,13 @@ class RedrawTraverse:
         #add Arc GraphItem
         setattr(Line.GraphicsItems, "Line", ArcLine)
 
+        return ArcLine
+
 
 class ArcParams:
     def __init__(self, radius, rotation):
         self.Radius = radius
         self.ArcRotation = rotation
+
+
+

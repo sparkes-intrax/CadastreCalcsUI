@@ -197,7 +197,7 @@ def bearing2_DMS(bearing):
     minutes = np.floor((bearing - degrees)*60)
     seconds = int(((bearing - degrees)*60 - minutes)*60)
 
-    DMS = str(int(degrees)) + '$^o$' + " " + str(int(minutes)) + "'" + str(seconds) + '"'
+    DMS = str(int(degrees)) + '.' + str(int(minutes)) + str(seconds)
 
 
     return DMS

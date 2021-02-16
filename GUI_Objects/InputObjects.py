@@ -2,7 +2,7 @@
 Create line edits, combo boxes and spin boxes with labels to be added to main GUI
 '''
 
-from PyQt5.QtWidgets import QLabel, QLineEdit, QSpinBox, QComboBox
+from PyQt5.QtWidgets import QLabel, QLineEdit, QSpinBox, QComboBox, QCompleter
 
 class InputObjects:
 
@@ -20,6 +20,11 @@ class InputObjects:
 
         if InputType == "QLineEdit":
             self.InputObj = QLineEdit(widget.groupBox)
+            self.InputObj.setFont(Font)
+            if ComboItems is not None:
+                completer = QCompleter(ComboItems)
+                #completer.complete()
+                self.InputObj.setCompleter(completer)
 
         elif InputType == "QSpinBox":
             self.InputObj = QSpinBox(widget.groupBox)

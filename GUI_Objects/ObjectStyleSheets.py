@@ -54,3 +54,18 @@ def QToolBar():
     """
 
     return style
+
+def buttonStyle():
+    style = """
+    QPushButton#Button 
+        {background-color: #3700B3;
+        color: white;
+        border-style: inset;
+        border-width: 2px;
+        border-radius: 5px;
+        border-color: silver;}
+    QPushButton#Button:hover
+        {background-color : #90adf0;}
+    """
+
+    return style

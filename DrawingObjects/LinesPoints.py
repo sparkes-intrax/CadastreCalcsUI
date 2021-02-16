@@ -130,13 +130,13 @@ class LineObjects:
 
         #Get Line Props
         LineProps = LinePointProperties()
-        self.LinePen, Layer = LineProps.SetLineProperties(pointObj.Params.Layer,
+        self.LinePen, Layer, Colour = LineProps.SetLineProperties(pointObj.Params.Layer,
                                                           SrcPoint.Layer)
 
         #create line object
         line = dataObjects.Line(pointObj.Params.SrcPntNum, pointObj.Params.PntNum,
                                 Layer, pointObj.Params.Distance,
-                                pointObj.deltaE, pointObj.deltaN, pointObj.Params.Bearing)
+                                pointObj.deltaE, pointObj.deltaN, pointObj.Params.Bearing, Colour)
         #Screen Coords
         E = pointObj.point.E * 1000
         N = pointObj.point.NorthingScreen*1000
@@ -147,12 +147,13 @@ class LineObjects:
         #get traverse lineNum and add line to traverse object
         lineNum = gui.CadastralPlan.Lines.LineNum + 1
         setattr(gui.traverse.Lines, ("line"+str(lineNum)), line)
+        if pointObj.point.Code in gui.CodeList:
+            setattr(gui.CadastralPlan.Lines, ("line"+str(lineNum)), line)
 
         #Add bearings and distances on line
-        label = self.LinePropsLabel(line, SrcPoint, pointObj, gui)
-        setattr(line.GraphicsItems, "Label", label)
-
-
+        if abs(float(line.Distance)) > 50:
+            label = self.LinePropsLabel(line, SrcPoint, pointObj, gui)
+            setattr(line.GraphicsItems, "Label", label)
 
         gui.CadastralPlan.Lines.LineNum += 1
         gui.traverse.Lines.LineNum += 1
@@ -170,7 +171,7 @@ class LineObjects:
 
         # set pen/brush colour
         LineProps = LinePointProperties()
-        self.LinePen, Layer = LineProps.SetLineProperties(pointObj.Params.Layer, SrcPoint.Layer)
+        self.LinePen, Layer, Colour = LineProps.SetLineProperties(pointObj.Params.Layer, SrcPoint.Layer)
 
         #get coordinates for centre of the arc
         CentreArcCoords = funcs.ArcCentreCoords(SrcPoint, pointObj.point,
@@ -181,7 +182,7 @@ class LineObjects:
                               Layer, pointObj.Params.Radius,
                               CentreArcCoords.CentreEasting, CentreArcCoords.CentreNorthing,
                               pointObj.Params.ArcRotation, pointObj.Params.Distance,
-                              pointObj.Params.Bearing, pointObj.deltaE, pointObj.deltaN)
+                              pointObj.Params.Bearing, pointObj.deltaE, pointObj.deltaN, Colour)
 
         #get arc path object
         ArcPath = Arcs.DrawArc(SrcPoint, pointObj.point, CentreArcCoords, pointObj.Params)
@@ -208,7 +209,18 @@ class LineObjects:
         :return:
         '''
 
-        LinePropsStr = line.Bearing + " ~ " + str(line.Distance)
+        if len(line.Bearing.split(".")) == 1:
+            bearingStr = line.Bearing + eval(r'"\u00B0"')
+        elif len(line.Bearing.split(".")[1]) == 2:
+            bearingStr = line.Bearing.split(".")[0] + eval(r'"\u00B0"') + \
+                         line.Bearing.split(".")[1][0:2] + "'"
+        else:
+            bearingStr = line.Bearing.split(".")[0] + eval(r'"\u00B0"') + \
+                         line.Bearing.split(".")[1][0:2] + "' " + \
+                         line.Bearing.split(".")[1][2:] + "\""
+
+        Distance = abs(float(line.Distance))
+        LinePropsStr = bearingStr + " ~ " + str(Distance)
         LineMidEasting = (SrcPoint.E + pointObj.point.E) / 2
         LineMidNorthing = (SrcPoint.NorthingScreen + pointObj.point.NorthingScreen)/2
         bearing = funcs.bearing2_dec(line.Bearing)
@@ -336,14 +348,14 @@ class LinePointProperties:
         if Layer == "REFERENCE MARKS" or SrcLayer == "REFERENCE MARKS":
             Colour = Qt.white
             Layer = "REFERENCE MARKS"
-        elif Layer == "BOUNDARY" or SrcLayer == "BOUNDARY":
-            Colour = Qt.cyan
-            Layer = "BOUNDARY"
-        else:
+        elif Layer == "EASEMENT" or SrcLayer == "EASEMENT":
             Colour = Qt.green
+            Layer = "EASEMENT"
+        else:
+            Colour = Qt.cyan
 
 
         Pen = QPen(Colour)
         Pen.setWidth(150)
 
-        return Pen, Layer
+        return Pen, Layer, Colour

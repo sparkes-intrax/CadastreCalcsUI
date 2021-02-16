@@ -209,11 +209,12 @@ class TraverseAdjustment:
         setattr(pointE, "NorthingScreen", NorthingScreen)
 
         #update line properties
-        lineDistance  = np.sqrt((deltaE)**2 + (deltaN)**2)
-        setattr(line, "Distance", lineDistance)
+        lineDistance  = round(np.sqrt((deltaE)**2 + (deltaN)**2), 3)
+        setattr(line, "Distance", str(lineDistance))
 
         #line bearing
         lineBearing = funcs.calcBearing(pointS.E, pointS.N, pointE.E, pointE.N)
+        lineBearing = funcs.bearing2_DMS(lineBearing)
         setattr(line, "Bearing", lineBearing)
 
         return Traverse

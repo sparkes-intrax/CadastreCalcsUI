@@ -10,7 +10,12 @@ def MajorGroupBox():
     :return: QFont object
     '''
 
-    font = QFont("Segoe UI", 12, QFont.Bold)
+    font = QFont("Segoe UI Black", 10, )
+
+    return font
+
+def InputBoxFont():
+    font = QFont("Segoe UI", 8, )
 
     return font
 
@@ -20,19 +25,19 @@ def MinorGroupBox():
     :return: QFont object
     '''
 
-    font = QFont("Segoe UI", 10, QFont.Bold)
+    font = QFont("Segoe UI Black", 8, QFont.Bold)
 
     return font
 
 def LabelFonts():
-    font = QFont("Segoe UI Black", 10, )
+    font = QFont("Segoe UI", 8, )
 
     return font
 
 def ButtonFont():
-    font = QFont("Segoe UI Black", 10, QFont.Bold)
+    font = QFont("Segoe UI Black", 8, QFont.Bold)
     return font
 
 def comboBoxFont():
-    font = QFont("Segoe UI Black", 10, )
+    font = QFont("Segoe UI Black", 8, )
     return font
