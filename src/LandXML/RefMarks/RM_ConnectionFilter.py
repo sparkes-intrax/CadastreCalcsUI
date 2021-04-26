@@ -1,9 +1,12 @@
 '''
 Workflow to filter Connections for a RM traverse
 '''
-from LandXML.RefMarks import RefMarkQueries
-from LandXML import BDY_Connections, Connections
-def FilterConnections(Observations, traverse, CadastralPlan, LandXML_Obj, PntRefNum):
+from LandXML.RefMarks import RefMarkQueries, TraverseNoBdy, FilterNonRMs
+from LandXML import BDY_Connections, Connections, NoConnection
+
+
+def FilterObservations(Observations, traverse, CadastralPlan, 
+                       LandXML_Obj, PntRefNum, gui):
     '''
     Perfroms specific filtering criteria to Connections for A RM traverse
     :param Connections: Set of connections to be queried - from LandXML
@@ -14,82 +17,57 @@ def FilterConnections(Observations, traverse, CadastralPlan, LandXML_Obj, PntRef
     '''
 
     #1) Remove connections not between RMs and dead ends when no more closes to find
-    Connections = RemoveNonRM_Connections(Observations, traverse, LandXML_Obj, PntRefNum)
-    if len(Connections.__dict__.keys()) == 0:
+    Observations = FilterNonRMs.RemoveNonRM_Connections(Observations, traverse, 
+                                                        LandXML_Obj, PntRefNum)
+    if len(Observations.__dict__.keys()) == 0:
         # deal with no connection
-        TraverseNoConnection(traverse, LandXML_Obj.TraverseProps, PntRefNum, LandXML_Obj)
-        return None
+        Observations, PntRefNum = NoConnection.main(LandXML_Obj.TraverseProps,
+                                                              LandXML_Obj,
+                                                              traverse,
+                                                              gui, CadastralPlan)
+        setattr(LandXML_Obj.TraverseProps, "PntRefNum", PntRefNum)
+        Observations = FilterNonRMs.RemoveNonRM_Connections(Observations, 
+                                                            traverse, LandXML_Obj, 
+                                                            PntRefNum)
+
     #2) Check for boundary connections if still looking for boundary connections
     # defined by whether RMs in LandXML have not been calculated  that have a BDY connection
     # LandXML_Obj.Traverse_Props.BdyConnections
     # remove non-boundary connected RMs only if there is choice of one with a BDY connection
+
     if LandXML_Obj.TraverseProps.BdyConnections:
         # create instance of Boundary checker
         ConnectionChecker = BDY_Connections.CheckBdyConnection(PntRefNum, LandXML_Obj)
         Observations = ConnectionChecker.FilterBdyConnection(Observations)
 
+    #Query remaining observations for boundary connections to determine
+            #next operation
+    LandXML_Obj.TraverseProps, Observations, PntRefNum = \
+        TraverseNoBdy.NoBdy(Observations, PntRefNum, LandXML_Obj,
+                            LandXML_Obj.TraverseProps, CadastralPlan, traverse, gui)
+
+    setattr(LandXML_Obj.TraverseProps, "PntRefNum", PntRefNum)
+
     # 3) More than 1 connection - select connections with bearing within 45 degrees.
     if len(Observations.__dict__.keys()) > 1:
+        LandXML_Obj.TraverseProps.Branches.append(PntRefNum)
         FinalConnectionFilter = FinalFilter(traverse, LandXML_Obj.TraverseProps)
         Observations =  FinalConnectionFilter.SimilarBearingConnection(Observations)
     # 4) if still more than one connection (or no connections) select shortest connection
     if len(Observations.__dict__.keys()) > 1:
         Observations = FinalConnectionFilter.FilterByDistance(Observations)
 
-
     #return connection
     for key in Observations.__dict__.keys():
         return Observations.__getattribute__(key)
     
-def RemoveNonRM_Connections(Observations, traverse, LandXML_Obj, PntRefNum):
+
+
+def TraverseBranches(PntRefNum, ):
     '''
-    Removes connections that are not between RMs
-    Prioritises BDY connections for enbd point of tested connection (If still applicable)
+    Checks if there are branches at PntRefNum and what to do about it 
     :return: 
     '''
-    #list of connections to delete
-    RemoveObs = []
-    #loop through connections
-    for key in Observations.__dict__.keys():
-        connection = Observations.__getattribute__(key)
-        
-        #get point ref numbers of connection
-        SetupID = connection.get("setupID").replace(LandXML_Obj.TraverseProps.tag, "")
-        TargetSetupID = connection.get("targetSetupID").replace(LandXML_Obj.TraverseProps.tag, "")
-        # get end point of connection
-        if SetupID == PntRefNum:
-            EndRefNum =  TargetSetupID
-        else:
-            EndRefNum = SetupID
-
-        #check if EndPoint is an RM
-        if not RefMarkQueries.CheckIfRefMark(LandXML_Obj, EndRefNum):
-            RemoveObs.append(key)
-            continue
-
-        #remove dead traverses
-        if DeadEndConnection(EndRefNum, LandXML_Obj) and LandXML_Obj.TraverseProps.TraverseClose:
-            RemoveObs.append(key)
-            continue
-            
-    #if Observations were found to delete remove them
-    if len(RemoveObs) > 0:
-        Observations = Connections.RemoveSelectedConnections(Observations, RemoveObs)
-
-    return Observations
-
-def DeadEndConnection(PntRefNum, LandXML_Obj):
-    '''
-    Checks if PntRefNum is a dead end
-    :param PntRefNum: Point to query (Point number from LandXML)
-    :param LandXML_Obj: LadnXML data object
-    :return:
-    '''
-    #Find all connections to PntRefNum - has one connection iof its a dead end
-    Observations = Connections.AllConnections(PntRefNum, LandXML_Obj)
-    if len(Observations.__dict__.keys()) == 1:
-        return True
-    return False
 
 
 class FinalFilter:
@@ -122,7 +100,7 @@ class FinalFilter:
         #Find Observations within 45 degrees of LastBearing
         ConnectionList = self.ObservationsWithinBearing(LastBearing, Observations, EndRefNum)
         #if find Observations within 45 degrees, delete other bearings
-        if len(ConnectionList.__dict__.keys()) > len(Observations.__dict__.keys()):
+        if len(ConnectionList) < len(Observations.__dict__.keys()):
             Observations = Connections.RemoveSelectedConnections(Observations, ConnectionList)
 
         return Observations
@@ -132,33 +110,35 @@ class FinalFilter:
         Finds the bearing of last connection in the traverse
         :return:
         '''
-        StartRefNum = traverse.refPnts[-2]
-        EndRefNum = traverse.refPnts[-1]
+        StartRefNum = self.traverse.refPnts[-2]
+        EndRefNum = self.traverse.refPnts[-1]
         #get line bearing of lasat connection
-        for key in traverse.Lines.__dict__.keys():
-            Line = traverse.Lines.__getatttribute(key)
+        for key in self.traverse.Lines.__dict__.keys():
+            if key == "LineNum":
+                continue
+            Line = self.traverse.Lines.__getattribute__(key)
             if Line.StartRef == StartRefNum and Line.EndRef == EndRefNum:
-                return float(Line.bearing), EndRefNum
+                return float(Line.Bearing), EndRefNum
 
-    def ConnectionsWithinBearing(self, LastBearing, Connections, PntRefNum):
+    def ObservationsWithinBearing(self, LastBearing, Observations, PntRefNum):
         '''
-        Finds the connections in Connections object that are within 45 degrees
+        Finds the Observations in Observations object that are within 45 degrees
             of LastBearing
         :param LastBearing: Bearing of last connection in traverese
-        :param Connections: Set of Connections from LandXML to query
-        :param PntRefNum: Starting point reference of all connections to be queried
-        :return: ConnectionList (List of connections that pass query)
+        :param Observations: Set of Observations from LandXML to query
+        :param PntRefNum: Starting point reference of all Observations to be queried
+        :return: ConnectionList (List of Observations that pass query)
         '''
 
-        #Create a list to store connections to remove - only when 1 or more connections pass
+        #Create a list to store Observations to remove - only when 1 or more Observations pass
             #bearing query
         ConnectionList = []
-        #Loop through connections and check if their bearings are within 45 degrees
-        for key in Connections.__dict__.keys():
-            connection = Connections.__getattribute__(key)
-            #Get connections bearing - normalised to same orientation as lat traverse connection
+        #Loop through Observations and check if their bearings are within 45 degrees
+        for key in Observations.__dict__.keys():
+            connection = Observations.__getattribute__(key)
+            #Get Observations bearing - normalised to same orientation as lat traverse connection
                 #that is setupiD (Last connection) = TargetID (queried connection)
-            if connection.get("setupID").replace(self.Traverse_Props.tag, "") == PntRefNum:
+            if connection.get("setupID").replace(self.TraverseProps.tag, "") == PntRefNum:
                 azimuth = float(connection.get("azimuth"))
             else:
                 azimuth = self.FlipBearing(float(connection.get("azimuth")))

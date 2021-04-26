@@ -24,6 +24,8 @@ class CheckBdyConnection:
         self.LandXML_Obj = LandXML_Obj        
         self.FindConnection = False
         self.FilterConnection = False
+        self.LargeLots = LandXML_Obj.TraverseProps.LargeLots #when True allows connections to large lots
+        self.ExistingLots = LandXML_Obj.TraverseProps.ExistingLots #when True allows connections to existing lots
 
     def CycleObservations(self):
         '''
@@ -38,7 +40,6 @@ class CheckBdyConnection:
             #Check if TargetID is a parcel vertex
             if self.FindConnection and self.BdyConnection(TargetID):
                 return True
-                break
             elif self.FilterConnection and not self.TestConnections(TargetID):
                 # when prioritising connections without a BDY connection
                 self.RemoveConnections.append(key)
@@ -93,7 +94,9 @@ class CheckBdyConnection:
 
         return Observations
 
-    ####################################################################
+
+
+        ####################################################################
     #methods to query whether connection has a BDY connection
     def BdyConnection(self, TargetID):
         '''
@@ -110,12 +113,14 @@ class CheckBdyConnection:
             try:
                 parcelArea = float(parcel.get("area"))
                 #filter for large public reserves
-                if parcelArea > 10000:
+                if parcelArea > 10000 and not self.LargeLots:
                     continue
             except TypeError:
                 continue
             #filter for class and state attributes which define a proposed lot in subdivision
-            if parcelClass == "Lot" and parcelState == "proposed":
+            if (parcelClass == "Lot" and parcelState == "proposed") or\
+                    (parcelClass == "Road" and self.LandXML_Obj.TraverseProps.RoadConnections) or \
+                    (parcelClass == "Lot" and parcelState == "adjoining" and self.ExistingLots):
                 #check if Target ID is in the parcels linework vertexes
                 if self.CheckParcelLines(parcel, TargetID, self.LandXML_Obj.TraverseProps):
                     return True
@@ -152,7 +157,6 @@ class CheckBdyConnection:
         :param PntRefNum:
         :return:
         '''
-
         # get all connections for TargetID
         TargetConnections = Connections.AllConnections(PntRefNum, self.LandXML_Obj)
         # check if any of the connections from TargetID are connected to a BDY
@@ -162,6 +166,5 @@ class CheckBdyConnection:
             # check if Target is a boundary
             if self.BdyConnection(Target):
                 return True
-                break
 
         return False

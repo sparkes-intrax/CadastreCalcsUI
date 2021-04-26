@@ -26,29 +26,12 @@ def LandXML(gui):
     LandXML_Obj = LandXML_IO.main(TraverseProps)
 
     if LandXML_Obj is not None:
-        #get connection tag in reduced observaations, assign as TraverseProps.tag
-        setattr(TraverseProps, "tag", ReducedObsTag(LandXML_Obj))
-        setattr(LandXML_Obj, "TraverseProps", TraverseProps)
-    
-    
+        #if RMs exists and are part of a traverse
         if LandXML_Obj.RefMarks:
             RefMark_Traverse.main(LandXML_Obj, gui)
+        else:
+            print("NO RMs")
 
-def ReducedObsTag(LandXML_Obj):
-    '''
-    Determines what tag is used in the Reduced Observation connection
-    :param LandXML_Obj:
-    :return:
-    '''
-
-    Obs = LandXML_Obj.ReducedObs.getchildren()[0]
-    #possible tags
-    tags = ["IS-", "IS", "S-"]
-    ID = Obs.get("setupID")
-    for tag in tags:
-        tagLen = len(tag)
-        if ID[:(tagLen)] == tag:
-            return tag
 
 
 
