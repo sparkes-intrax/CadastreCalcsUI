@@ -3,12 +3,23 @@ Determines starting points for traverses
 '''
 
 from LandXML.Cadastre import BdyQueries
+from LandXML.RefMarks import RefMarkQueries
+from LandXML import BDY_Connections
 
 def main(gui, LandXML_Obj):
     '''
     Coordinates workflow to determine starting point for traverse
     :return:
     '''
+
+    TraverseStartObj = TraverseStart(gui, LandXML_Obj)
+    if LandXML_Obj.RefMarks:
+        PntRefNum = TraverseStartObj.RefMarks()
+    else:
+        PntRefNum = TraverseStartObj.NoRefMarks()
+        
+    return PntRefNum
+
     
     
     
@@ -26,6 +37,21 @@ class TraverseStart:
         :return:
         '''
 
+        # loop through observations
+        for ob in self.LandXML_Obj.ReducedObs.getchildren():
+            # check if observation contains PntRefNum is connection
+            attrib = ob.attrib
+            if "targetSetupID" in attrib.keys():
+                SetupID = ob.get("setupID").replace(self.LandXML_Obj.TraverseProps.tag, "")
+                TargetID = ob.get("targetSetupID").replace(self.LandXML_Obj.TraverseProps.tag, "")
+                #check if a boundary connection of subdivision parcel
+                ObservationChecker = BDY_Connections.CheckBdyConnection(SetupID, self.LandXML_Obj)
+                if (ObservationChecker.BdyConnection(SetupID) and
+                        ObservationChecker.BdyConnection(TargetID)):
+                    return SetupID
+
+        return None
+
     def RefMarks(self):
         '''
         Coordinates finding a starting point when plan has RMs
@@ -36,31 +62,50 @@ class TraverseStart:
 
         #Test RoadParcel Query
         PntRefNum = self.CalculatedRM()
-        if PntRefNum is None:
+        if PntRefNum is False:
+            self.QueryType = "ConnectionRoadParcel"
+        else:
+            return PntRefNum
+
+        # Test connection connected to road frontage
+        PntRefNum = self.CalculatedPoint()
+        if PntRefNum is False:
             self.QueryType = "Road"
         else:
             return PntRefNum
 
-        #Test Road Query
+        #Test Road Query - known point and parcel observation with as
+            #road frontage
         PntRefNum = self.CalculatedRM()
-        if PntRefNum is None:
+        if PntRefNum is False:
             self.QueryType = "KnownPointRoadParcel"
+        else:
+            return PntRefNum
+
+        # Test Road Query - known point and
+        # road frontage - not part of a subdivision parcel
+        PntRefNum = self.CalculatedPoint()
+        if PntRefNum is False:
+            self.QueryType = "KnownPointRoad"
         else:
             return PntRefNum
 
         # Test if already calculated points have road frontage
         PntRefNum = self.CalculatedPoint()
-        if PntRefNum is None:
+        if PntRefNum is False:
             self.QueryType = "RmAndBdy"
         else:
             return PntRefNum
 
         # Test if already calculated points have road frontage
-        PntRefNum = self.CalculatedPoint()
-        if PntRefNum is None:
+        PntRefNum = self.CalculatedRM()
+        if PntRefNum is False:
             self.QueryType = "KnownPointAndBdy"
         else:
             return PntRefNum
+
+        PntRefNum = self.CalculatedPoint()
+        return PntRefNum
 
     def CalculatedRM(self):
         '''
@@ -77,18 +122,34 @@ class TraverseStart:
                 #check if RM has been calculated in RM traverse
                 if hasattr(self.gui.CadastralPlan.Points, PntRefNum):
                     #Query the boundaries connected to RM
-                    if self.QueryRMsObservations(PntRefNum):
+                    if BdyQueries.main(self.LandXML_Obj, PntRefNum,
+                                       self.gui, self.QueryType, True):
                         return PntRefNum
 
 
         return False
 
-    def QueryRMsObservations(self, PntRefNum):
+    def CalculatedPoint(self):
         '''
-        Gets connections to RM defined by PntRefNum and checks whether
-        :param PntRefNum:
+        Checks calculated points (not RMs) for a traverse start
         :return:
         '''
 
-        if self.QueryType == "RoadParcel": #road frontage and parcel
+        for key in self.gui.CadastralPlan.Points.__dict__.keys():
+            point = self.gui.CadastralPlan.Points.__getattribute__(key)
+            #check point is not RM
+            if not RefMarkQueries.CheckIfRefMark(self.LandXML_Obj, point.PntNum):
+                if self.QueryType == "ConnectionRoadParcel":
+                    QueryResult = BdyQueries.main(self.LandXML_Obj, point.PntNum,
+                                       self.gui, self.QueryType, True)
+                else:
+                    QueryResult = BdyQueries.main(self.LandXML_Obj, point.PntNum,
+                                                  self.gui, self.QueryType, False)
+
+                if QueryResult:
+                    return point.PntNum
+
+        return False
+
+
             

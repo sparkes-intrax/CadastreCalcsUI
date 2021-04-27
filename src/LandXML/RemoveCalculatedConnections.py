@@ -52,8 +52,9 @@ class RemoveConnections:
             if self.CheckLinesObject(connection, self.CadastralPlan.Lines):
                 RemoveObs.append(key)
             # check if traverse already contains connection or end point is traverse midpoint
+            #elif self.traverse is not None:
             elif self.CheckLinesObject(connection, self.traverse.Lines):
-                RemoveObs.append(key)
+                    RemoveObs.append(key)
 
             #Check cadastral plan point objects
             # stops taking a single connection traverse close
@@ -61,6 +62,7 @@ class RemoveConnections:
                 RemoveObs.append(key)
 
             elif self.TraverseProps.TraverseClose:
+                #if self.traverse is not None:
                 if self.CheckLinesObject(connection, self.traverse.TriedConnections):
                     RemoveObs.append(key)
                 elif self.CheckLinesObject(connection, self.CadastralPlan.TriedConnections):
@@ -109,8 +111,9 @@ class RemoveConnections:
                     (SetupID == EndRef and TargetSetupID == StartRef):
                 return True
             #
+            #elif self.traverse is not None:
             elif TargetSetupID in self.traverse.refPnts and \
-                    TargetSetupID != self.traverse.refPnts[0]:
+                TargetSetupID != self.traverse.refPnts[0]:
                 return True
 
 
@@ -124,6 +127,7 @@ class RemoveConnections:
         :return:
         '''
         TargetID = Connections.GetTargetID(connection, self.PntRefNum, self.TraverseProps)
+        #if self.traverse is not None:
         if hasattr(Points, TargetID) and len(self.traverse.refPnts) == 1:
             return True
 

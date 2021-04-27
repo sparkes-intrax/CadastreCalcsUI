@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import QFileDialog
 
 from LandXML import LandXML_Traverse_Props, LandXML_IO
 from LandXML.RefMarks import RefMark_Traverse
+from LandXML.Cadastre import CadastreTraverse
 
 
 def LandXML(gui):
@@ -29,7 +30,9 @@ def LandXML(gui):
         #if RMs exists and are part of a traverse
         if LandXML_Obj.RefMarks:
             RefMark_Traverse.main(LandXML_Obj, gui)
+            CadastreTraverse.main(gui, LandXML_Obj)
         else:
+            CadastreTraverse.main(gui, LandXML_Obj)
             print("NO RMs")
 
 
