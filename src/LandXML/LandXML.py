@@ -12,6 +12,8 @@ from LandXML import LandXML_Traverse_Props, LandXML_IO
 from LandXML.RefMarks import RefMark_Traverse
 from LandXML.Cadastre import CadastreTraverse
 
+import CadastreClasses as DataObjects
+
 
 def LandXML(gui):
     '''
@@ -30,11 +32,21 @@ def LandXML(gui):
         #if RMs exists and are part of a traverse
         if LandXML_Obj.RefMarks:
             RefMark_Traverse.main(LandXML_Obj, gui)
-            CadastreTraverse.main(gui, LandXML_Obj)
+            gui = ClearTriedConnections(gui)
+            CadastreTraverse.CadastreTraverses(gui, LandXML_Obj)
         else:
-            CadastreTraverse.main(gui, LandXML_Obj)
+            CadastreTraverse.CadastreTraverses(gui, LandXML_Obj)
             print("NO RMs")
 
+def ClearTriedConnections(gui):
+    '''
+    Remove Tried Connections from gui.CadatralPlan
+    :param gui:
+    :return:
+    '''
+
+    gui.CadastralPlan.TriedConnections = DataObjects.Lines()
+    return gui
 
 
 

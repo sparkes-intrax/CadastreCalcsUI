@@ -4,23 +4,48 @@ Determines starting points for traverses
 
 from LandXML.Cadastre import BdyQueries
 from LandXML.RefMarks import RefMarkQueries
-from LandXML import BDY_Connections
+from LandXML import BDY_Connections, Coordinates
 
-def main(gui, LandXML_Obj):
-    '''
-    Coordinates workflow to determine starting point for traverse
-    :return:
-    '''
-
-    TraverseStartObj = TraverseStart(gui, LandXML_Obj)
-    if LandXML_Obj.RefMarks:
-        PntRefNum = TraverseStartObj.RefMarks()
-    else:
-        PntRefNum = TraverseStartObj.NoRefMarks()
-        
-    return PntRefNum
-
+class TraverseStartPoint:
+    def __init__(self, gui, LandXML_Obj, FirstTraverse):
+        '''
+        Coordinates workflow to determine starting point for traverse
+        :return:
+        '''
     
+        TraverseStartObj = TraverseStart(gui, LandXML_Obj)
+        if LandXML_Obj.RefMarks or (LandXML_Obj.RefMarks and not FirstTraverse):
+            PntRefNum = TraverseStartObj.RefMarks()
+        else:
+            PntRefNum = TraverseStartObj.NoRefMarks()
+        
+        try:
+            self.SetStartPointProps(gui, PntRefNum, LandXML_Obj)
+        except TypeError:
+            pass
+            
+    def SetStartPointProps(self, gui, PntRefNum, LandXML_Obj):
+        '''
+        Set class attribute for start point (PntRefNum
+        :param gui: 
+        :param PntRefNum: 
+        :return: 
+        '''
+        if LandXML_Obj.RefMarks:
+            point = gui.CadastralPlan.Points.__getattribute__(PntRefNum)
+            self.PntRefNum = PntRefNum
+            self.Easting = point.E
+            self.Northing = point.N
+            self.NorthingScreen = point.NorthingScreen
+            self.Layer = point.Layer
+            self.Code = point.Code
+        else:
+            self.PntRefNum = PntRefNum
+            self.Code = ""
+            self.Easting, self.Northing = Coordinates.getPointCoords(self.PntRefNum,
+                                                                     LandXML_Obj)
+            self.NorthingScreen = self.Northing
+            self.Layer = "BOUNDARY"
     
     
 class TraverseStart:
@@ -61,33 +86,47 @@ class TraverseStart:
         '''
 
         #Test RoadParcel Query
-        PntRefNum = self.CalculatedRM()
+        PntRefNum = False
+        if not self.LandXML_Obj.BdyStartChecks.RmToRoadFrontage:
+            PntRefNum = self.CalculatedRM()
         if PntRefNum is False:
+            self.LandXML_Obj.BdyStartChecks.RmToRoadFrontage = True
             self.QueryType = "ConnectionRoadParcel"
         else:
+            self.TraverseProps.RmBdyTraverseStart = True
             return PntRefNum
 
-        # Test connection connected to road frontage
+        # Test connection observation connected to road frontage
         PntRefNum = self.CalculatedPoint()
         if PntRefNum is False:
-            self.QueryType = "Road"
+            self.QueryType = "RoadExtent"
         else:
+            self.TraverseProps.RmBdyTraverseStart = False
             return PntRefNum
 
         #Test Road Query - known point and parcel observation with as
             #road frontage
+        PntRefNum = self.CalculatedPoint()
+        if PntRefNum is False:
+            self.QueryType = "Road"
+        else:
+            self.TraverseProps.RmBdyTraverseStart = True
+            return PntRefNum
+
+        # For old plans looks for a road extent observation
         PntRefNum = self.CalculatedRM()
         if PntRefNum is False:
             self.QueryType = "KnownPointRoadParcel"
         else:
+            self.TraverseProps.RmBdyTraverseStart = True
             return PntRefNum
-
         # Test Road Query - known point and
-        # road frontage - not part of a subdivision parcel
+        # road frontage - part of a subdivision parcel
         PntRefNum = self.CalculatedPoint()
         if PntRefNum is False:
             self.QueryType = "KnownPointRoad"
         else:
+            self.TraverseProps.RmBdyTraverseStart = False
             return PntRefNum
 
         # Test if already calculated points have road frontage
@@ -95,6 +134,7 @@ class TraverseStart:
         if PntRefNum is False:
             self.QueryType = "RmAndBdy"
         else:
+            self.TraverseProps.RmBdyTraverseStart = False
             return PntRefNum
 
         # Test if already calculated points have road frontage
@@ -102,9 +142,11 @@ class TraverseStart:
         if PntRefNum is False:
             self.QueryType = "KnownPointAndBdy"
         else:
+            self.TraverseProps.RmBdyTraverseStart = True
             return PntRefNum
 
         PntRefNum = self.CalculatedPoint()
+        self.TraverseProps.RmBdyTraverseStart = False
         return PntRefNum
 
     def CalculatedRM(self):
@@ -138,8 +180,8 @@ class TraverseStart:
         for key in self.gui.CadastralPlan.Points.__dict__.keys():
             point = self.gui.CadastralPlan.Points.__getattribute__(key)
             #check point is not RM
-            if not RefMarkQueries.CheckIfRefMark(self.LandXML_Obj, point.PntNum):
-                if self.QueryType == "ConnectionRoadParcel":
+            if not RefMarkQueries.CheckIfRefMark(self.LandXML_Obj, point.PntNum.split("_")[0]):
+                if self.QueryType == "ConnectionRoadParcel" or self.QueryType == "RoadExtent":
                     QueryResult = BdyQueries.main(self.LandXML_Obj, point.PntNum,
                                        self.gui, self.QueryType, True)
                 else:

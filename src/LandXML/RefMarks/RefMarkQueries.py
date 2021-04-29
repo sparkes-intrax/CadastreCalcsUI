@@ -59,6 +59,20 @@ def CheckIfRefMark(LandXML_Obj, PntRefNum):
     
     return False
 
+def CheckIfMonument(LandXML_Obj, PntRefNum):
+    '''
+    Check if PntRefNUm is an RM
+    :param LandXML_Obj:
+    :param PntRefNum:
+    :return: Boolean - True if RM, False otherwise
+    '''
+
+    for monument in LandXML_Obj.Monuments.getchildren():
+        if monument.get("pntRef") == PntRefNum:
+            return True
+        
+    return False
+
 def CheckIfConnectionMark(LandXML_Obj, PntRefNum):
     '''
     Checks if pntrefNum is a refmark found on boundary corner

@@ -132,5 +132,27 @@ class RemoveConnections:
             return True
 
         return False
+    
+def CheckTargetPoint(Observations, CadastralPlan, PntRefNum, LandXML_Obj):
+    '''
+    Checks observations if they are to a already calculated point
+    Removes these observations from Observations list
+    :param Observations: 
+    :param CadastralPlan: 
+    :return: 
+    '''
+    RemoveObs = []
+    for key in Observations.__dict__.keys():
+        Observation = Observations.__getattribute__(key)
+        
+        TargetID = Connections.GetTargetID(Observation, PntRefNum, LandXML_Obj.TraverseProps)
+        if hasattr(CadastralPlan.Points, TargetID):
+            RemoveObs.append(key)
+            
+    if len(RemoveObs) > 0:
+        Observations = Connections.RemoveSelectedConnections(Observations, RemoveObs)
+        
+    return Observations
+
 
 

@@ -27,10 +27,18 @@ def PopulateLandXML_Object(lxml, LandXML_Obj, TraverseProps):
     :param LandXML_Obj:
     :return:
     '''
-
+    ns = lxml.getroot().nsmap
     LandXML_Obj.Monuments = lxml.find(TraverseProps.Namespace + "Monuments")
     LandXML_Obj.Coordinates = lxml.find(TraverseProps.Namespace + "CgPoints")
     LandXML_Obj.Parcels = lxml.find(TraverseProps.Namespace + "Parcels")
+    #get Road and Easement Parcels
+    setattr(LandXML_Obj, "RoadParcels", lxml.findall("//Parcel[@class='Road']", ns))
+
+    #Easement Parcels
+    Eas = lxml.findall("//Parcel[@class='Easement']", ns)
+    DesArea = lxml.findall("//Parcel[@class='Designated Area']", ns)
+    RestrictLand = lxml.findall("//Parcel[@class='Restriction On Use Of Land']", ns)
+    setattr(LandXML_Obj, "EasementParcels", (Eas+DesArea+RestrictLand))
     # get DP number
     Survey = lxml.find(TraverseProps.Namespace + "Survey")
     SurveyHeader = Survey.find(TraverseProps.Namespace + "SurveyHeader")

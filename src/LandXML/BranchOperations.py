@@ -147,12 +147,14 @@ class AddBranch:
                 BranchPnts = Branch.refPnts
 
                 if BranchPnts == self.traverse.refPnts:
+                    #self.AddObservationTrying()
                     return True
                     break
             except AttributeError:
                 pass
             
         return False
+    
     
     def CreateBranch(self, BranchList):
         '''

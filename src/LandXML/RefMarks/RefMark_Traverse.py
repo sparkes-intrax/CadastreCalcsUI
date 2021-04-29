@@ -2,7 +2,7 @@
 Workflow for Reference mark traverses
 '''
 import CadastreClasses as DataObjects
-from LandXML import Connections, BDY_Connections#, LandXML_Traverses
+from LandXML import Connections, BDY_Connections, SharedOperations#, LandXML_Traverses
 from LandXML.RefMarks import TraverseStart, RM_TraverseCalcs
 from TraverseOperations import TraverseOperations, TraverseClose
 
@@ -29,7 +29,7 @@ def main(LandXML_Obj, gui):
         elif StartPoint.PntRefNum is None:
             LandXML_Obj.TraverseProps.ExistingLots = True
     #create new traverse and add start point
-    traverse = initialiseTraverse(StartPoint, "REFERENCE MARKS", True)
+    traverse = SharedOperations.initialiseTraverse(StartPoint, "REFERENCE MARKS", True)
     #setattr(gui, "traverse", traverse)
 
     #set traverse props for RM traverses
@@ -58,19 +58,23 @@ def main(LandXML_Obj, gui):
             DrawTraverse.main(gui, traverseObj.Branches.CurrentBranch)
 
         #Apply close adjustment if required
+        gui = SharedOperations.ApplyCloseAdjustment(traverseObj.Branches.CurrentBranch,
+                                                         LandXML_Obj,
+                                                         gui)
+        '''
         if LandXML_Obj.TraverseProps.TraverseClose and LandXML_Obj.TraverseProps.ApplyCloseAdjustment:
             N_Error, E_Error, close = TraverseClose.misclose(traverseObj.Branches.CurrentBranch,
                                                             gui.CadastralPlan)
-            message = "Easting Misclose: " + str(round(E_Error,4)) + "m\n" \
-                    "Northing Misclose: " + str(round(N_Error,4)) + "m\n" \
-                    "Total Misclose: " + str(round(close,4)) + "m\n"
+            message = "Easting Misclose: " + str(round(1000*E_Error,1)) + "mm\n" \
+                    "Northing Misclose: " + str(round(1000*N_Error,1)) + "mm\n" \
+                    "Total Misclose: " + str(round(1000*close,1)) + "mm\n"
             title = "TRAVERSE MISCLOSE"
             
             MessageBoxes.genericMessage(message, title)
             TraverseClose.TraverseAdjustment(traverseObj.Branches.CurrentBranch, gui.CadastralPlan,
                                              E_Error, N_Error)
-
-
+        '''
+        
         if CheckRMsNotCalculated(gui, LandXML_Obj.Monuments, LandXML_Obj):
             break
         #after first traverse prioritise road and BDY connections
@@ -81,7 +85,7 @@ def main(LandXML_Obj, gui):
         StartPoint.GetTravStart()
         # create point object and new traverse object
         try:
-            traverse = initialiseTraverse(StartPoint, "REFERENCE MARKS", False)
+            traverse = SharedOperations.initialiseTraverse(StartPoint, "REFERENCE MARKS", False)
         except AttributeError:
             #no branches from last traverse check if anymore connections or tried connections
                 #to calculate
@@ -90,7 +94,7 @@ def main(LandXML_Obj, gui):
                 if StartPoint.PntRefNum is None:
                     break
 
-                traverse = initialiseTraverse(StartPoint, "REFERENCE MARKS", False)
+                traverse = SharedOperations.initialiseTraverse(StartPoint, "REFERENCE MARKS", False)
             else:
                 break
         '''
@@ -126,20 +130,6 @@ def CheckRMsNotCalculated(gui, Monuments, LandXML_Obj):
 
     return True
 
-def initialiseTraverse(StartPoint, Layer, FirstTraverse):
-    '''
-    Creates a traverse object for starting a new traverse from startPoint
-    :param StartPoint: 
-    :param Layer: 
-    :param FirstTraverse: whether first traverse in calcs
-    :return: 
-    '''
-
-    point = DataObjects.Point(StartPoint.PntRefNum, StartPoint.Easting, StartPoint.Northing,
-                              StartPoint.NorthingScreen, None, StartPoint.Code, Layer)
-    traverse = TraverseOperations.NewTraverse(Layer, StartPoint.PntRefNum, FirstTraverse, point)
-    
-    return traverse
 
 class Branches(object):
     pass

@@ -3,6 +3,7 @@ Set of functions and methods to query a boundary point
 '''
 from LandXML import Connections, RemoveCalculatedConnections, BDY_Connections
 import CadastreClasses as DataObjects
+from LandXML.Easements import RemoveEasements
 
 def main(LandXML_Obj, PntRefNum, gui, Query, RM_Connection):
     '''
@@ -12,7 +13,8 @@ def main(LandXML_Obj, PntRefNum, gui, Query, RM_Connection):
     :param Query: 
     :return: 
     '''
-
+    #if PntRefNum == "194":
+    #    print("Stop")
     # Get connections from PntRefNum
     Observations = Connections.AllConnections(PntRefNum, LandXML_Obj)
     # Remove already calculated connections
@@ -20,14 +22,31 @@ def main(LandXML_Obj, PntRefNum, gui, Query, RM_Connection):
                                                              DataObjects.Traverse(False, "RM"),
                                                              LandXML_Obj.TraverseProps,
                                                              PntRefNum)
+    Observations  = RemoveCalculatedConnections.CheckTargetPoint(Observations,
+                                                                 gui.CadastralPlan,
+                                                                 PntRefNum,
+                                                                 LandXML_Obj)
+    #Remove Easements
+    RemoveEasObj = RemoveEasements.RemoveEasementObservations(Observations,
+                                                              PntRefNum,
+                                                              LandXML_Obj)
+    Observations = RemoveEasObj.SearchObservations()
+    if len(Observations.__dict__.keys()) == 0:
+        return False
+    
     # Loop through available observations
     if RM_Connection:
         #tests connections to the RM connection
         for key in Observations.__dict__.keys():
             Observation = Observations.__getattribute__(key)
-
-            #Get TargetID for Observation
-            TargetID = Connections.GetTargetID(Observation, PntRefNum, LandXML_Obj.TraverseProps)
+            desc = Observation.get("desc")
+            
+            if desc == "Connection" or desc == "Road Extent" or \
+                    desc == "Reference":
+                # Get TargetID for Observation
+                TargetID = Connections.GetTargetID(Observation, PntRefNum, LandXML_Obj.TraverseProps)
+            else:
+                continue
 
             #Get Connections to TargetID
             TargetObservations = Connections.AllConnections(TargetID, LandXML_Obj)
@@ -40,13 +59,13 @@ def main(LandXML_Obj, PntRefNum, gui, Query, RM_Connection):
             TargetObservations = RemoveParentObservation(TargetObservations, TargetID, PntRefNum,
                                                          LandXML_Obj)
             #run Query
-            RunQueryObj = RunQuery(TargetObservations, LandXML_Obj, Query, TargetID, RM_Connection)
+            RunQueryObj = RunQuery(TargetObservations, LandXML_Obj, Query, TargetID)#, RM_Connection)
 
             if RunQueryObj.CoordinateQuery():
                 return True
     else:
         #tests connections to PntRefNum
-        RunQueryObj = RunQuery(Observations, LandXML_Obj, Query, PntRefNum, RM_Connection)
+        RunQueryObj = RunQuery(Observations, LandXML_Obj, Query, PntRefNum)#, RM_Connection)
         if RunQueryObj.CoordinateQuery():
             return True
             
@@ -73,12 +92,12 @@ def RemoveParentObservation(Observations, TargetID, PntRefNum, LandXML_Obj):
             return Observations
 
 class RunQuery:
-    def __init__(self, Observations, LandXML_Obj, Query, PntRefNum, RmConnection):
+    def __init__(self, Observations, LandXML_Obj, Query, PntRefNum):#, RmConnection):
         self.Observations = Observations
         self.LandXML_Obj = LandXML_Obj
         self.Query = Query
         self.PntRefNum = PntRefNum
-        self.RmConnection = RmConnection
+        #self.RmConnection = RmConnection
 
     def CoordinateQuery(self):
         '''
@@ -93,7 +112,7 @@ class RunQuery:
             Observation = self.Observations.__getattribute__(key)
 
             if self.Query == "RoadParcel" or self.Query == "KnownPointRoadParcel"\
-                    or self.Query == "ConnectionRoadParcel":
+                    or self.Query == "ConnectionRoadParcel" or self.Query == "RoadExtent":
                 if self.RoadFrontageParcel(Observation):
                     return True
             elif self.Query == "Road" or self.Query == "KnownPointRoad":
@@ -147,11 +166,8 @@ class RunQuery:
         TargetID = Connections.GetTargetID(Observation, self.PntRefNum,
                                            self.LandXML_Obj.TraverseProps)
         #loop through parcels to find road parcels
-        for parcel in self.LandXML_Obj.Parcels.getchildren():
-            parcelClass = parcel.get("class")
-
-            if parcelClass == "Road":
-                if self.CheckParcelLines(parcel, TargetID) and \
+        for parcel in self.LandXML_Obj.RoadParcels:
+            if self.CheckParcelLines(parcel, TargetID) and \
                         self.CheckParcelLines(parcel, self.PntRefNum):
                     return True
 
@@ -168,7 +184,12 @@ class RunQuery:
                                            self.LandXML_Obj.TraverseProps)
         # Check if its a boundary of parcel from subdivision
         ObservationChecker = BDY_Connections.CheckBdyConnection(TargetID, self.LandXML_Obj)
+        if (ObservationChecker.BdyConnection(TargetID) and \
+                ObservationChecker.BdyConnection(self.PntRefNum)) and \
+                Observation.get("desc") == "Boundary":
+            return True
         
+        return False
 
     def CheckParcelLines(self, parcel, TargetID):
         '''

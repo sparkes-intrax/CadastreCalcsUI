@@ -128,9 +128,11 @@ class FindNextConnection:
         :return: True if close is found and Observation is selectec
         '''
 
-        self.CloseCheck = TraverseClose.CloseChecker(self.TraverseProps)
-        self.CloseConnection = self.CloseCheck.RM_Close(self.CadastralPlan,
-                                                        self.traverse, self.Observations)
+        self.CloseCheck = TraverseClose.CloseChecker(self.LandXML_Obj,
+                                                self.Observations,
+                                                self.traverse,
+                                                self.CadastralPlan)
+        self.CloseConnection = self.CloseCheck.RM_Close()
         if self.CloseCheck.Close:
             # Close operations
             # print("Close found")

@@ -24,4 +24,5 @@ class TraverseProps:
             #or where the RMs joining onto existing lots
         self.LargeLots = False
         self.ExistingLots = False
+        self.RmBdyTraverseStart = False
 

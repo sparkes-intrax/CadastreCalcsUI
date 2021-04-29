@@ -58,6 +58,7 @@ class TraverseStart:
                     self.Easting, Northing = Coordinates.getPointCoords(self.PntRefNum, self.LandXML_Obj)
                     self.Northing = Northing
                     self.NorthingScreen = Northing
+                    self.Layer = "REFERENCE MARKS"
                     break
     
     def BdyConnectionStart(self):
@@ -82,6 +83,7 @@ class TraverseStart:
                     self.Easting, Northing = Coordinates.getPointCoords(self.PntRefNum, self.LandXML_Obj)
                     self.Northing = Northing
                     self.NorthingScreen = Northing
+                    self.Layer = "REFERENCE MARKS"
                     break
 
     def NextTraverses(self):
@@ -112,6 +114,7 @@ class TraverseStart:
                     self.Easting = point.E
                     self.Northing = point.N
                     self.NorthingScreen = point.NorthingScreen
+                    self.Layer = point.Layer
                     break
             
 
@@ -193,6 +196,7 @@ class NextStart:
         self.Easting = point.E
         self.Northing = point.N
         self.NorthingScreen = point.NorthingScreen
+        self.Layer = point.Layer
 
     def CheckTriedConnections(self):
         '''

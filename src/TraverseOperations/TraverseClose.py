@@ -52,7 +52,7 @@ def misclose(travSeries, PlanObj):
     endPoint = travSeries.Points.__getattribute__(travSeries.refPnts[-1])
     EastEnd = endPoint.E
     NorthEnd = endPoint.N
-    if travSeries.FirstTraverse and travSeries.type == "REFERENCE MARKS":
+    if travSeries.FirstTraverse:
         closePoint = travSeries.Points.__getattribute__(travSeries.StartRefPnt)
 
     else:

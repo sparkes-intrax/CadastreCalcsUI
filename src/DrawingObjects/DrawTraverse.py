@@ -26,6 +26,23 @@ def main(gui, traverse):
     DrawObject = DrawTraverse(gui, traverse)
     DrawObject.DrawPoints()
     DrawObject.DrawLines()
+
+def SingelConnection(gui, traverse):
+    '''
+    when a single connection between points is determined as the traverse path
+    Allows drawing of line on canvas and adding line to CadastralPlan
+    Takes coordinates from already calculated point
+    :param gui:
+    :param traverse:
+    :return:
+    '''
+    
+    #add data to plan
+    DataCommitObject = DataCommit(gui.CadastralPlan, traverse)
+
+
+    #get instance of DarwTraverse
+    DrawObject = DrawTraverse(gui, traverse)
     
 class DrawTraverse:
     def __init__(self, gui, traverse):
@@ -133,7 +150,7 @@ class DrawTraverse:
         #draw arc
         ArcLine = self.gui.view.scene.addPath(ArcPath.arcPath, self.LinePen)
         self.line.BoundingRect = ArcLine.boundingRect()
-        setattr(self.line.GraphicsItems, "Line", self.GraphLine)
+        setattr(self.line.GraphicsItems, "Line", ArcLine)
 
 
     def AddLineBearingDistance2GUI(self):
@@ -214,7 +231,7 @@ class DataCommit:
             if key == "LineNum":
                 continue
             line = self.traverse.Lines.__getattribute__(key)
-            LineNum = self.CadastralPan.Lines.__getattribute__("LineNum")
+            LineNum = self.CadastralPan.Lines.__getattribute__("LineNum") + 1
             setattr(self.CadastralPan.Lines, ("Line" + str(LineNum)), line)
             setattr(self.CadastralPan.Lines, "LineNum", (LineNum+1))
 

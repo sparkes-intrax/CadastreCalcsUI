@@ -26,7 +26,10 @@ class TraverseSide:
                 self.Connection = Connection.Observations.__getattribute__(key)
                 break
         except AttributeError:
-            self.Connection = Connection
+            try:
+                self.Connection = Connection.__getattribute__("Observation")
+            except AttributeError:
+                self.Connection = Connection
 
         self.gui = gui
         self.LandXML_Obj = LandXML_Obj
@@ -323,12 +326,11 @@ class TraverseSide:
         '''
 
 
-        if RefMarkQueries.CheckIfRefMark(self.LandXML_Obj, self.TargPntRefNum):
-            return "REFERENCE MARKS"
-        elif self.Connection.get("desc") == "Connection":
-            return "REFERENCE MARKS"
-        elif self.CheckIfBoundary():
+
+        if self.CheckIfBoundary():
             return "BOUNDARY"
+        elif RefMarkQueries.CheckIfMonument(self.LandXML_Obj, self.TargPntRefNum):
+            return "REFERENCE MARKS"
         else:
             return "EASEMENT"
 
@@ -338,6 +340,7 @@ class TraverseSide:
         checks if end point is a boundary - for layer determination
         :return:
         '''
+
         ConnectionChecker = BDY_Connections.CheckBdyConnection(self.PntRefNum, self.LandXML_Obj)
         #Loop through parcels in landXML file
         for parcel in self.LandXML_Obj.Parcels.getchildren():
@@ -345,7 +348,7 @@ class TraverseSide:
             parcelState = parcel.get("state")
 
             if parcelClass != "Easement" or parcelClass != "Restriction On Use Of Land":
-                if ConnectionChecker.CheckParcelLines(parcel, self.TargPntRefNum,
+                if ConnectionChecker.CheckParcelLines(parcel, self.TargPntRefNum.split("_")[0],
                                                    self.LandXML_Obj.TraverseProps):
                     return True
 

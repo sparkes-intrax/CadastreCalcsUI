@@ -6,7 +6,7 @@ Methods and workflow to calculate an RM traverse
 
 from LandXML import Connections, TraverseClose, TraverseNoConnection, FindConnection, \
     TraverseSideCalcs, RemoveCalculatedConnections, RemoveDeadEnds, NoConnection, \
-    BranchOperations
+    BranchOperations, SharedOperations
 from LandXML.RefMarks import FindRmConnection, FilterNonRMs, RefMark_Traverse, RefMarkQueries
 from TraverseOperations import CopyTraverseInstance
 
@@ -436,7 +436,7 @@ class Traverse:
             point = traverse.Points.__getattribute__(self.PntRefNum)
             StartPoint = CreateStartPoint(point)
             FirstTraverse = traverse.FirstTraverse
-            traverse = RefMark_Traverse.initialiseTraverse(StartPoint, "REFERENCE MARKS", FirstTraverse)
+            traverse = SharedOperations.initialiseTraverse(StartPoint, "REFERENCE MARKS", FirstTraverse)
             setattr(self.Branches, "CurrentBranch", traverse)
             self.Branches.CurrentBranch = traverse
             setattr(self.Branches.CurrentBranch, "BranchName", self.PntRefNum)
