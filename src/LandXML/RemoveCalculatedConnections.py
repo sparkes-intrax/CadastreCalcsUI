@@ -4,6 +4,7 @@ Removes connections from Observation list that have already been calculated:
 - In CadastralPlan
 '''
 from LandXML import Connections
+from timer import Timer
 
 
 def main(Observations, CadastralPlan, traverse, TraverseProps, PntRefNum):
@@ -49,11 +50,11 @@ class RemoveConnections:
         for key in self.Observations.__dict__.keys():
             connection = self.Observations.__getattribute__(key)
             # check if cadastralPlan contains connection
-            if self.CheckLinesObject(connection, self.CadastralPlan.Lines):
+            if self.CheckLinesObject(connection, self.CadastralPlan.Lines, key):
                 RemoveObs.append(key)
             # check if traverse already contains connection or end point is traverse midpoint
             #elif self.traverse is not None:
-            elif self.CheckLinesObject(connection, self.traverse.Lines):
+            elif self.CheckLinesObject(connection, self.traverse.Lines, key):
                     RemoveObs.append(key)
 
             #Check cadastral plan point objects
@@ -63,9 +64,9 @@ class RemoveConnections:
 
             elif self.TraverseProps.TraverseClose:
                 #if self.traverse is not None:
-                if self.CheckLinesObject(connection, self.traverse.TriedConnections):
+                if self.CheckLinesObject(connection, self.traverse.TriedConnections, key):
                     RemoveObs.append(key)
-                elif self.CheckLinesObject(connection, self.CadastralPlan.TriedConnections):
+                elif self.CheckLinesObject(connection, self.CadastralPlan.TriedConnections, key):
                     RemoveObs.append(key)
             # check
         # remove any observation collected in RemoveObs(Already calc'd)
@@ -75,7 +76,7 @@ class RemoveConnections:
         return self.Observations
 
 
-    def CheckLinesObject(self, connection, Lines):
+    def CheckLinesObject(self, connection, Lines, LineKey):
         '''
         Checks Lines data object if it contains connection
         :param connection:
@@ -91,9 +92,17 @@ class RemoveConnections:
             SetupID = connection.get("targetSetupID").replace(self.TraverseProps.tag, "")
             TargetSetupID = connection.get("setupID").replace(self.TraverseProps.tag, "")
         
-        
 
+        if hasattr(Lines, LineKey):
+            return True
+        elif TargetSetupID in self.traverse.refPnts and \
+             TargetSetupID != self.traverse.refPnts[0]:
+            return True
+
+        '''
         # Check if connection has already been calculated or
+        tObj = Timer()
+        tObj.start()
         for key in Lines.__dict__.keys():
             if key == "LineNum":
                 continue
@@ -109,13 +118,17 @@ class RemoveConnections:
         # checks connection = line (ie already calculated)
             if (SetupID == StartRef and TargetSetupID == EndRef) or \
                     (SetupID == EndRef and TargetSetupID == StartRef):
+                tObj.stop("Loop line checker")
                 return True
             #
             #elif self.traverse is not None:
             elif TargetSetupID in self.traverse.refPnts and \
                 TargetSetupID != self.traverse.refPnts[0]:
+                tObj.stop("Loop line checker")
                 return True
 
+        tObj.stop("Loop line checker")
+        '''
 
         return False
 

@@ -5,8 +5,10 @@ Draws traverse selected from LandXML file
 from DrawingObjects import LinesPoints, Arcs
 import CadastreClasses as DataObjects
 import genericFunctions as funcs
+from LandXML import Connections, RemoveCalculatedConnections, SharedOperations
+from LandXML.Easements import RemoveEasements
 
-def main(gui, traverse):
+def main(gui, traverse, LandXML_Obj):
     '''
     Coordinates workflow to draw traverse on drawing canvas
     Calculates close
@@ -15,12 +17,15 @@ def main(gui, traverse):
     :param traverse:
     :return:
     '''
+    #get traverse distances
+    traverse = SharedOperations.CalculateTraverseDistances(traverse)
     # get instance to add data to CadastralPlan
-    DataCommitObject = DataCommit(gui.CadastralPlan, traverse)
+    DataCommitObject = DataCommit(gui.CadastralPlan, traverse, LandXML_Obj)
     #DataCommitObject
     DataCommitObject.AddPoints()
     DataCommitObject.AddLines()
     DataCommitObject.AddTraverses()
+    DataCommitObject.AddPointsToList()
 
     #get instance of DarwTraverse
     DrawObject = DrawTraverse(gui, traverse)
@@ -52,6 +57,7 @@ class DrawTraverse:
         '''
         self.gui = gui
         self.traverse = traverse
+        
 
     def DrawPoints(self):
         '''
@@ -204,10 +210,12 @@ class DrawTraverse:
 
 class DataCommit:
 
-    def __init__(self, CadastralPan, traverse):
+    def __init__(self, CadastralPan, traverse, LandXML_Obj):
 
-        self.CadastralPan = CadastralPan
+        self.CadastralPlan = CadastralPan
         self.traverse = traverse
+        self.LandXML_Obj = LandXML_Obj
+        self.PointsAdd = []
     
     #def RemoveGraphicsItems 
 
@@ -219,7 +227,10 @@ class DataCommit:
         #sequentially add points in traverse to CadastralPlan
         for key in self.traverse.Points.__dict__.keys():
             point = self.traverse.Points.__getattribute__(key)
-            setattr(self.CadastralPan.Points, key, point)
+            if not point.__class__.__name__ == "Point":
+                continue
+            self.PointsAdd.append(point.PntNum)
+            setattr(self.CadastralPlan.Points, key, point)
 
     def AddLines(self):
         '''
@@ -231,9 +242,9 @@ class DataCommit:
             if key == "LineNum":
                 continue
             line = self.traverse.Lines.__getattribute__(key)
-            LineNum = self.CadastralPan.Lines.__getattribute__("LineNum") + 1
-            setattr(self.CadastralPan.Lines, ("Line" + str(LineNum)), line)
-            setattr(self.CadastralPan.Lines, "LineNum", (LineNum+1))
+            #LineNum = self.CadastralPlan.Lines.__getattribute__("LineNum") + 1
+            setattr(self.CadastralPlan.Lines, key, line)
+            self.CadastralPlan.Lines.LineNum += 1
 
     def AddTraverses(self):
         '''
@@ -241,10 +252,10 @@ class DataCommit:
         :return:
         '''
 
-        TraverseNum = self.CadastralPan.Traverses.TraverseCounter
+        TraverseNum = self.CadastralPlan.Traverses.TraverseCounter
         TravName = "Traverse" +"_" + self.traverse.type + "_" +str(TraverseNum)
-        setattr(self.CadastralPan.Traverses, TravName, self.traverse)
-        setattr(self.CadastralPan.Traverses, "TraverseCounter", (TraverseNum+1))
+        setattr(self.CadastralPlan.Traverses, TravName, self.traverse)
+        setattr(self.CadastralPlan.Traverses, "TraverseCounter", (TraverseNum+1))
 
     def GetPointNumber(self):
         '''
@@ -256,9 +267,9 @@ class DataCommit:
         '''
 
         PntNum = self.traverse.refPnts[-1]
-        if hasattr(self.CadastralPan.Points, PntNum):
+        if hasattr(self.CadastralPlan.Points, PntNum):
             counter = 0
-            for key in self.CadastralPan.Points.__dict__.keys():
+            for key in self.CadastralPlan.Points.__dict__.keys():
                 if key == self.traverse.refPnts[-1]:
                     counter +=1
             
@@ -277,6 +288,63 @@ class DataCommit:
                 line = self.traverse.Lines.__getattribute__(key)
                 if line.EndRef == str(PntNum):
                     line.EndRef = NewPntNum
+
+    def AddPointsToList(self):
+        '''
+        Adds points added from traverse to CadastralPlan.Points.PointList
+        #check current and added points if connections to point still be a calc'd
+        #Easements not included as connection
+
+        :return:
+        '''
+
+        #check points in Points.pointslist and remove ones with no connections remaining
+        RemovePoints = self.FindPointConnections(self.CadastralPlan.Points.PointList)
+        self.CadastralPlan.Points.PointList = self.RemovePointsfromList(RemovePoints,
+                                                                       self.CadastralPlan.Points.PointList)
+
+        # check points in Points.pointslist and remove ones with no connections remaining
+        RemovePoints = self.FindPointConnections(self.PointsAdd)
+        for point in self.PointsAdd:
+            if point not in RemovePoints:
+                self.CadastralPlan.Points.PointList.append(point)
+
+    def FindPointConnections(self, PointList):
+
+        RemovePoints = []
+        for point in PointList:
+            Observations = Connections.AllConnections(point.split("_")[0], self.LandXML_Obj)
+            traverse = SharedOperations.initialiseTraverse(SharedOperations.DummyStartPoint(point),
+                                                           "REFERENCE MARKS", True)
+            Observations = RemoveCalculatedConnections.main(Observations, self.CadastralPlan,
+                                                            traverse,
+                                                            self.LandXML_Obj.TraverseProps,
+                                                            point.split("_")[0])
+            #Remove Easements
+            RemoveEasObj = RemoveEasements.RemoveEasementObservations(Observations,
+                                                                      point.split("_")[0],
+                                                                      self.LandXML_Obj)
+            Observations = RemoveEasObj.SearchObservations()
+
+            if len(Observations.__dict__.keys()) == 0:
+                RemovePoints.append(point)
+
+        return RemovePoints
+
+    def RemovePointsfromList(self, RemovePoints, PointList):
+        # Remove points that have all connection calculated
+        if len(RemovePoints) > 0:
+            try:
+                for point in RemovePoints:
+                    PointList.remove(point)
+            except ValueError:
+                pass #when multiple values for a point - normally when 4_1 exists
+
+        return PointList
+
+
+
+
 
 
 

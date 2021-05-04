@@ -4,6 +4,8 @@ Methods to retreive connections for a given point in the Land XML file
 from LandXML import RemoveCalculatedConnections, RemoveDeadEnds
 from LandXML.RefMarks import FilterNonRMs
 from numpy import sin
+
+from timer import Timer
 class AllConnections:
 
     def __init__(self, PntRefNum, LandXML_Obj):
@@ -13,8 +15,22 @@ class AllConnections:
         :param ReducedObs: LandXML element from the Survey parent element
         '''
         #Counter for number of connections for PntRefNum
+        #tObj = Timer()
         ConnectionNum = 0
+        #tObj.start()
+        ObsID = LandXML_Obj.TraverseProps.tag + PntRefNum
+        ns = LandXML_Obj.lxml.getroot().nsmap
+        Query = "//ReducedObservation[@setupID='" + ObsID + "']"
+        Observations1 = LandXML_Obj.lxml.findall(Query, ns)
+        Query = "//ReducedObservation[@targetSetupID='" + ObsID + "']"
+        Observations2 = LandXML_Obj.lxml.findall(Query, ns)
+        Observations = Observations1 + Observations2
+        #tObj.stop("Findall lxml operation:")
+        for ob in Observations:
+            setattr(self, ob.get("name"), ob)
         # loop through observations
+        '''
+        tObj.start()
         for ob in LandXML_Obj.ReducedObs.getchildren():
             #check if observation contains PntRefNum
             attrib = ob.attrib
@@ -25,6 +41,9 @@ class AllConnections:
                     # pntRef in ob -> add to Obs
                     ConnectionNum += 1
                     setattr(self, ("connection" + str(ConnectionNum)), ob)
+
+        tObj.stop("Loop operation:")
+        '''
 
 
 def RemoveSelectedConnections(Observations, RemoveObs):

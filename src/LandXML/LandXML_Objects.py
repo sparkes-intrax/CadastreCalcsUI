@@ -45,6 +45,7 @@ def PopulateLandXML_Object(lxml, LandXML_Obj, TraverseProps):
     setattr(LandXML_Obj, "DP", SurveyHeader.get("name"))
     # get reduced observations
     LandXML_Obj.ReducedObs = Survey.find(TraverseProps.Namespace + "ObservationGroup")
+    setattr(LandXML_Obj, "lxml", lxml)
     
     return LandXML_Obj
 

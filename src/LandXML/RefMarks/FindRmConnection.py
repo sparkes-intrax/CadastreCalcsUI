@@ -148,6 +148,8 @@ class FindNextConnection:
             - Primary or Secondary
         :return:
         '''
+        #print("PntRefNum: " + self.PntRefNum)
+        #print(len(self.Observations.__dict__.keys()))
         for key in self.Observations.__dict__.keys():
             Observation = self.Observations.__getattribute__(key)
             break
@@ -202,7 +204,7 @@ class FindNextConnection:
         self.Observations, self.PntRefNum, self.traverse,\
             BranchList = \
             NoConnection.main(BranchList, self.Observations,
-                              self.gui.CadastralPlan, self.traverse,
+                              self.gui, self.traverse,
                               self.Branches, self.RmOnly, self.LandXML_Obj)
         return BranchList
     

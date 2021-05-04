@@ -48,7 +48,8 @@ class Traverse:
         #set branch name for referencing parent branches
         #setattr(self.CurrentTraverse, "BranchName", self.PntRefNum)
         #add reference to the first branch calculated
-
+        if self.PntRefNum == "9":
+            print("here")
         # find all connections for self.PntRefNum and remove any non-RM connections
         Observations = Connections.AllConnections(self.PntRefNum, self.LandXML_Obj)
         # loop to add sides to a traverse
@@ -76,6 +77,9 @@ class Traverse:
                 self.MixTraverse = True
             # calculate new point and create line object - send gui and update drawing canvas
             self.PntRefNum = self.LandXML_Obj.TraverseProps.__getattribute__("PntRefNum")
+            if len(self.Branches.CurrentBranch.refPnts) == 1:
+                ObsName = dir(connection.Observations)[0]
+                setattr(self.Branches.CurrentBranch, "StartObs", ObsName)
             point = TraverseSideCalcs.TraverseSide(self.PntRefNum,
                                                      self.Branches.CurrentBranch, connection,
                                                      self.gui, self.LandXML_Obj)
@@ -253,6 +257,11 @@ class Traverse:
                 #remove traverse branch from list
                 RemoveBranches.append(TravRefNum)
                 Observations = Connections.AllConnections(self.PntRefNum, self.LandXML_Obj)
+                # Remove Already calculated observations
+                Observations = RemoveCalculatedConnections.main(Observations, self.gui.CadastralPlan,
+                                                                self.Branches.CurrentBranch,
+                                                                self.LandXML_Obj.TraverseProps,
+                                                                self.PntRefNum)
                 #remove any already calculated branch from new PntRefNum and non-RM connections
                 Observations = self.CheckBranches(Observations,
                                                   self.Branches.CurrentBranch.TriedObservation)
@@ -324,7 +333,7 @@ class Traverse:
                         continue
 
                     if traverse.Closed or TravKey == self.Branches.CurrentBranch.ParentBranch:
-                        if RemoveObj.CheckLinesObject(connection, traverse.Lines):
+                        if RemoveObj.CheckLinesObject(connection, traverse.Lines, key):
                             if key not in RemoveObs:
                                 RemoveObs.append(key)
 
@@ -496,9 +505,9 @@ class Traverse:
         '''
 
         if len(self.Branches.CurrentBranch.Lines.__dict__.keys())> 1:
-            Line = self.Branches.CurrentBranch.Lines.__getattribute__("line1")
+            Line = self.Branches.CurrentBranch.Lines.__getattribute__(self.Branches.CurrentBranch.StartObs)
             LineNum = self.gui.CadastralPlan.TriedConnections.__getattribute__("LineNum")
-            LineName = "Line" + str(LineNum)
+            LineName = self.Branches.CurrentBranch.StartObs
             setattr(self.gui.CadastralPlan.TriedConnections, LineName, Line)
             setattr(self.gui.CadastralPlan.TriedConnections, "LineNum", (LineNum+1))
 
@@ -509,20 +518,21 @@ class Traverse:
                                            self.gui.CadastralPlan, self.Branches.CurrentBranch, self.gui)
             if len(Observations.__dict__.keys()) > 0:
                 setattr(connection, "Observations", Observations)
-                for key in Observations.__dict__.keys():
-                    Observation = Observations.__getattribute__(key)
-                    break
+                #for key in Observations.__dict__.keys():
+                Observation = Observations.__getattribute__(dir(Observations)[0])
+                ObsName = Observation.get("name")
+                #break
                 TargetID = Connections.GetTargetID(Observation, self.PntRefNum, self.LandXML_Obj.TraverseProps)
 
                 SideObj = TraverseSideCalcs.TraverseSide(self.PntRefNum,
                                                        self.Branches.CurrentBranch, connection,
                                                        self.gui, self.LandXML_Obj)
                 #Side = SideObj.CalcPointCoordsWorkflow()
-
-                Line = self.Branches.CurrentBranch.Lines.__getattribute__("line1")
+                setattr(self.Branches.CurrentBranch, "StartObs", ObsName)
+                Line = self.Branches.CurrentBranch.Lines.__getattribute__(self.Branches.CurrentBranch.StartObs)
                 LineNum = self.gui.CadastralPlan.TriedConnections.__getattribute__("LineNum")
-                LineName = "Line" + str(LineNum)
-                setattr(self.gui.CadastralPlan.TriedConnections, LineName, Line)
+                LineName = self.Branches.CurrentBranch.StartObs
+                setattr(self.gui.CadastralPlan.TriedConnections, ObsName, Line)
                 setattr(self.gui.CadastralPlan.TriedConnections, "LineNum", (LineNum + 1))
 
     def UpdateBranches(self):

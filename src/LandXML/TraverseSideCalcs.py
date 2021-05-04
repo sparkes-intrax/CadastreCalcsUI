@@ -31,6 +31,7 @@ class TraverseSide:
             except AttributeError:
                 self.Connection = Connection
 
+        self.ObsName = self.Connection.get("name")
         self.gui = gui
         self.LandXML_Obj = LandXML_Obj
         self.CalcPointCoordsWorkflow()
@@ -201,8 +202,8 @@ class TraverseSide:
 
         #add line to the GUI - adds Graphics Items to line class
         #self.AddLine2GUI()
-        LineNum = self.traverse.Lines.LineNum + 1
-        setattr(self.traverse.Lines, ("line"+str(LineNum)), self.line)
+        #LineNum = self.traverse.Lines.LineNum + 1
+        setattr(self.traverse.Lines, self.ObsName, self.line)
         self.traverse.Lines.LineNum += 1
 
     def AddArc2Traverse(self):
@@ -225,8 +226,8 @@ class TraverseSide:
                               self.bearing, self.deltaE, self.deltaN, self.LineColour)
 
         #Add arc to traverse
-        LineNum = self.traverse.Lines.LineNum + 1
-        setattr(self.traverse.Lines, ("line" + str(LineNum)), self.line)
+        #LineNum = self.traverse.Lines.LineNum + 1
+        setattr(self.traverse.Lines, self.ObsName, self.line)
         self.traverse.Lines.LineNum += 1
 
 
@@ -326,11 +327,14 @@ class TraverseSide:
         '''
 
 
-
+        desc = self.Connection.get("desc")
         if self.CheckIfBoundary():
             return "BOUNDARY"
-        elif RefMarkQueries.CheckIfMonument(self.LandXML_Obj, self.TargPntRefNum):
+        elif RefMarkQueries.CheckIfMonument(self.LandXML_Obj, self.TargPntRefNum.split("_")[0]):
             return "REFERENCE MARKS"
+        elif desc == "Connection" or desc == "Road Extent" or desc == "IrregularLine" or \
+                desc == "Road":
+            return "BOUNDARY"
         else:
             return "EASEMENT"
 
@@ -347,7 +351,8 @@ class TraverseSide:
             parcelClass = parcel.get("class")
             parcelState = parcel.get("state")
 
-            if parcelClass != "Easement" or parcelClass != "Restriction On Use Of Land":
+            if parcelClass != "Easement" or parcelClass != "Restriction On Use Of Land" or \
+                    parcelClass != "Designated Area":
                 if ConnectionChecker.CheckParcelLines(parcel, self.TargPntRefNum.split("_")[0],
                                                    self.LandXML_Obj.TraverseProps):
                     return True

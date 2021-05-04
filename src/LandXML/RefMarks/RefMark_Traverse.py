@@ -55,25 +55,12 @@ def main(LandXML_Obj, gui):
 
         #add traverse to Cadastral Plan
         if len(traverseObj.Branches.CurrentBranch.refPnts) > 1 and traverseObj.Branches is not None:
-            DrawTraverse.main(gui, traverseObj.Branches.CurrentBranch)
+            DrawTraverse.main(gui, traverseObj.Branches.CurrentBranch, LandXML_Obj)
 
         #Apply close adjustment if required
         gui = SharedOperations.ApplyCloseAdjustment(traverseObj.Branches.CurrentBranch,
                                                          LandXML_Obj,
                                                          gui)
-        '''
-        if LandXML_Obj.TraverseProps.TraverseClose and LandXML_Obj.TraverseProps.ApplyCloseAdjustment:
-            N_Error, E_Error, close = TraverseClose.misclose(traverseObj.Branches.CurrentBranch,
-                                                            gui.CadastralPlan)
-            message = "Easting Misclose: " + str(round(1000*E_Error,1)) + "mm\n" \
-                    "Northing Misclose: " + str(round(1000*N_Error,1)) + "mm\n" \
-                    "Total Misclose: " + str(round(1000*close,1)) + "mm\n"
-            title = "TRAVERSE MISCLOSE"
-            
-            MessageBoxes.genericMessage(message, title)
-            TraverseClose.TraverseAdjustment(traverseObj.Branches.CurrentBranch, gui.CadastralPlan,
-                                             E_Error, N_Error)
-        '''
         
         if CheckRMsNotCalculated(gui, LandXML_Obj.Monuments, LandXML_Obj):
             break

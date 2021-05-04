@@ -157,6 +157,8 @@ class NextStart:
         #loops through calculated points
         for key in self.CadastralPlan.Points.__dict__.keys():
             point = self.CadastralPlan.Points.__getattribute__(key)
+            if not point.__class__.__name__ == "Point":
+                continue
             PntRefNum = point.PntNum
             traverse = TraverseOperations.NewTraverse("REFERENCE MARKS", PntRefNum,
                                                       False, "DummyPoint")

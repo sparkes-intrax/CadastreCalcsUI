@@ -58,7 +58,7 @@ class CadastreTraverses:
             #add traverse to CadastralPlan
             try:
                 if len(traversePath.refPnts) > 2:
-                    DrawTraverse.main(self.gui, traversePath)
+                    DrawTraverse.main(self.gui, traversePath, self.LandXML_Obj)
                     self.gui = SharedOperations.ApplyCloseAdjustment(traverse,
                                                                      self.LandXML_Obj,
                                                                      self.gui)
@@ -66,7 +66,8 @@ class CadastreTraverses:
                     DrawTraverse.SingelConnection(self.gui, traversePath)
                     
             except AttributeError as err:
-                print("AttributeError: {0}".format(err))
+                pass
+                #print("AttributeError: {0}".format(err))
 
             #Get next start
             StartPoint = BdyTraverseStart.TraverseStartPoint(self.gui, self.LandXML_Obj, False)
@@ -84,7 +85,7 @@ class CadastreTraverses:
         '''
 
         try:
-            print(StartPoint.PntRefNum)
+            #print(StartPoint.PntRefNum)
             #if StartPoint.PntRefNum == "53":
             #    print("Stop")
             traverse = SharedOperations.initialiseTraverse(StartPoint, "BOUNDARY", False)

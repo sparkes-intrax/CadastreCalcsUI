@@ -1,11 +1,11 @@
 '''
 Handles traverse when no connections meets criteria
 '''
-from LandXML import Connections, RemoveCalculatedConnections
+from LandXML import Connections, RemoveCalculatedConnections, RemoveDeadEnds
 from LandXML.RefMarks import FilterNonRMs
 from TraverseOperations import CopyTraverseInstance
 
-def main(BranchList, Observations, CadastralPlan, traverse, 
+def main(BranchList, Observations, gui, traverse,
          Branches, RmOnly, LandXML_Obj):
     '''
     Coorindates workflow to find the next branch along a traverse to try
@@ -18,7 +18,7 @@ def main(BranchList, Observations, CadastralPlan, traverse,
     #Set new trav
     #get observations from branch
 
-    FindBranchObj = FindBranch(CadastralPlan, BranchList, traverse, Branches, 
+    FindBranchObj = FindBranch(gui, BranchList, traverse, Branches,
                                LandXML_Obj, RmOnly)
     PntRefNum = None
     NewTraverse = None
@@ -35,10 +35,11 @@ def main(BranchList, Observations, CadastralPlan, traverse,
 
 
 class FindBranch:
-    def __init__(self, CadastralPlan, BranchList,
+    def __init__(self, gui, BranchList,
                  traverse, Branches, LandXML_Obj, RmOnly):
 
-        self.CadastralPlan = CadastralPlan
+        self.CadastralPlan = gui.CadastralPlan
+        self.gui = gui
         self.BranchList = BranchList
         self.traverse = traverse
         self.Branches = Branches
@@ -121,6 +122,12 @@ class FindBranch:
                                                                 self.LandXML_Obj,
                                                                 self.PntRefNum,
                                                                      "Priority")
+
+        #Remove dead ends when traverse close still a priority
+        if self.LandXML_Obj.TraverseProps.TraverseClose:
+            Observations = RemoveDeadEnds.main(self.PntRefNum, Observations,
+                                               self.LandXML_Obj, self.gui,
+                                               self.traverse)
 
         return Observations
 

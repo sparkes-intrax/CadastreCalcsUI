@@ -3,7 +3,7 @@ Coordinates branch creation and traverse path selection
 '''
 from LandXML import Connections, TraverseSideCalcs, SharedOperations
 from LandXML.Cadastre import BdySideSelection
-
+from timer import Timer
 from DrawingObjects import DrawTraverse
 
 
@@ -26,6 +26,7 @@ class TraverseCalcs:
         self.LandXML_Obj = LandXML_Obj
         self.PntRefNum = PntRefNum
         self.Observations = Connections.AllConnections(self.PntRefNum, self.LandXML_Obj)
+        self.tObj = Timer()
         setattr(self.LandXML_Obj.TraverseProps, "PntRefNum", self.PntRefNum)
         
     def FindPath(self, traverse):
@@ -47,8 +48,12 @@ class TraverseCalcs:
         
         #finds sides until closed
         while (not TraverseFinished):
+            #print(self.PntRefNum)
+            if self.PntRefNum == '2239':
+                print("stop")
             setattr(self.Branches.CurrentBranch, "NextStartPnt", None)
             #select observation from self.Observations - apply priorities
+            #self.tObj.start()
             ObservationObj = BdySideSelection.SideSelection(self.Observations, 
                                                             self.Branches.CurrentBranch, 
                                                          self.LandXML_Obj, 
@@ -56,11 +61,13 @@ class TraverseCalcs:
                                                          self.PntRefNum,
                                                             self.Branches, self.gui)
             Observation = ObservationObj.PrioritiseObservations()
+            #self.tObj.stop("Bdy Side Selection")
             #check if an observation was selected
             if Observation is None:
                 break
 
             self.Branches.CurrentBranch = ObservationObj.traverse
+            self.PntRefNum = self.LandXML_Obj.TraverseProps.PntRefNum
             #Add side to traverse
             point = TraverseSideCalcs.TraverseSide(self.PntRefNum,
                                                    self.Branches.CurrentBranch,
@@ -89,7 +96,7 @@ class TraverseCalcs:
         if self.Branches.CurrentBranch.NextStartPnt is not None:
             # start next traverse from same spot and run normal close operations
             # add traverse to Cadadastral Plan and gui
-            DrawTraverse.main(self.gui, self.Branches.CurrentBranch)
+            DrawTraverse.main(self.gui, self.Branches.CurrentBranch, self.LandXML_Obj)
             self.gui = SharedOperations.ApplyCloseAdjustment(self.Branches.CurrentBranch,
                                                              self.LandXML_Obj,
                                                              self.gui)

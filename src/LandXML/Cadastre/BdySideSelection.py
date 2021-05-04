@@ -7,6 +7,7 @@ from LandXML import RemoveCalculatedConnections, TraverseClose, Connections, \
                     RemoveDeadEnds
 from LandXML.Cadastre import BdyQueries, BdyNextBranch
 from LandXML.Easements import RemoveEasements
+from timer import Timer
 
 
 class SideSelection:
@@ -30,6 +31,7 @@ class SideSelection:
         self.gui = gui
         self.TraverseClose = False
         self.PrimaryBranch = False
+        self.tObj = Timer()
 
     def PrioritiseObservations(self):
         '''
@@ -38,17 +40,21 @@ class SideSelection:
         '''
 
         #1) Remove already calculated Observations
+        #self.tObj.start()
         self.Observations = RemoveCalculatedConnections.main(self.Observations, 
                                                              self.CadastralPlan,
                                                              self.traverse,
                                                              self.LandXML_Obj.TraverseProps,
                                                              self.PntRefNum)
-        
+        #self.tObj.stop("Remove Already Calculated Connections")
+
+        #self.tObj.start()
         self.Observations = RemoveDeadEnds.main(self.PntRefNum, 
                                                 self.Observations, 
                                                 self.LandXML_Obj, 
                                                 self.gui, 
                                                 self.traverse)
+        #self.tObj.stop("Remove DeadEnds")
         #remove Easement boundaries
         RemoveEasObj = RemoveEasements.RemoveEasementObservations(self.Observations,
                                                                   self.PntRefNum,
@@ -56,25 +62,36 @@ class SideSelection:
         self.Observations = RemoveEasObj.SearchObservations()
         #Check to see if any observations are road frontage or boundary
         #for when close found, starts next traverse fromm same spot
+        #self.tObj.start()
         if self.RoadsAndBoundaries():
             setattr(self.traverse, "NextStartPnt", self.PntRefNum)
+        #self.tObj.stop("Road and Boundary check for branches")
             
         #2) Check for close to RM (can't close on starting point??)
+        #self.tObj.start()
         if self.TraverseCloseCheck("RM"):
             return ObservationObj(self.Observations, self.PntRefNum)
-
+        #self.tObj.stop("RM Close check")
         #3) Check for close to connection
+        #self.tObj.start()
         if self.TraverseCloseCheck("Connection"):
             return ObservationObj(self.Observations, self.PntRefNum)
+        #self.tObj.stop("Connection Close check")
         #3a) when an old plan sometime connections are defined as Road Extent
-        if self.LandXML_Obj.RefMarks:
+        #self.tObj.start()
+        if not self.LandXML_Obj.RefMarks:
             if self.TraverseCloseCheck("RoadExtent"):
                 return ObservationObj(self.Observations, self.PntRefNum)
+        #self.tObj.stop("Close for RoadExtent Connection")
         #4) Priotise a road frontage that is part of a parcel of the subdivision
+        #self.tObj.start()
         self.SidePriorities("RoadParcel")
+        #self.tObj.stop("Road Parcel Priority")
         #5) Check for any close
+        #self.tObj.start()
         if self.TraverseCloseCheck("Any"):
             return ObservationObj(self.Observations, self.PntRefNum)
+        #self.tObj.stop("Any Close check")
         #6) Check if branches and add to branch object (branches are only used when a close
             #can't be found, so cleared after close found)
         if len(self.Observations.__dict__.keys()) > 1:
@@ -89,7 +106,9 @@ class SideSelection:
             self.FinalSelection()
         elif len(self.Observations.__dict__.keys()) == 0:
             if len(self.traverse.PrimaryBranches) > 0:
+                self.tObj.start()
                 self.GetNextBranch()
+                self.tObj.stop("Next Branch")
             else:
                 return None
             

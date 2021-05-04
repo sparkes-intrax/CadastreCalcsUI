@@ -24,11 +24,13 @@ class CadastralPlan:
         self.TriedConnections = Lines()
 
 #set up geometry classes
-class Points(object):
+class Points:
     '''
     parent class to store point objects
     '''
-    pass
+    def __init__(self):
+        #If all connections to a point have been calc'd - they are removed from list
+        self.PointList = []
 
 class Point:
     def __init__(self, PntNum, Easting, Northing, NorthingScreen, Elevation, Code, Layer):
