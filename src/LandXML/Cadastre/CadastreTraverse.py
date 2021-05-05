@@ -71,10 +71,13 @@ class CadastreTraverses:
 
             #Get next start
             StartPoint = BdyTraverseStart.TraverseStartPoint(self.gui, self.LandXML_Obj, False)
+
             traverse, StartPoint = self.StartPointQuery(StartPoint)
             if traverse is None:
                 print("Found all boundary traverse Paths")
                 break
+            else:
+                print("StartPoint: " + StartPoint.PntRefNum)
 
 
     def StartPointQuery(self, StartPoint):

@@ -14,6 +14,10 @@ class AllConnections:
         :param PntRefNum: Integer refNum to pointsin the LandXML file
         :param ReducedObs: LandXML element from the Survey parent element
         '''
+
+        #Get Oobservations from pointrefNum
+        Observations =self.GetQueries(PntRefNum, LandXML_Obj)
+        '''
         #Counter for number of connections for PntRefNum
         #tObj = Timer()
         ConnectionNum = 0
@@ -26,24 +30,38 @@ class AllConnections:
         Observations2 = LandXML_Obj.lxml.findall(Query, ns)
         Observations = Observations1 + Observations2
         #tObj.stop("Findall lxml operation:")
+        '''
         for ob in Observations:
             setattr(self, ob.get("name"), ob)
-        # loop through observations
-        '''
-        tObj.start()
-        for ob in LandXML_Obj.ReducedObs.getchildren():
-            #check if observation contains PntRefNum
-            attrib = ob.attrib
-            if "targetSetupID" in attrib.keys():
-                SetupID = ob.get("setupID").replace(LandXML_Obj.TraverseProps.tag, "")
-                TargetID = ob.get("targetSetupID").replace(LandXML_Obj.TraverseProps.tag, "")
-                if PntRefNum == SetupID or PntRefNum == TargetID:
-                    # pntRef in ob -> add to Obs
-                    ConnectionNum += 1
-                    setattr(self, ("connection" + str(ConnectionNum)), ob)
 
-        tObj.stop("Loop operation:")
+
+    def GetQueries(self, PntRefNum, LandXML_Obj):
         '''
+        RUns a set of queries to extract observations with PntRefNum
+        :return:
+        '''
+
+        ObsID = LandXML_Obj.TraverseProps.tag + PntRefNum
+        ns = LandXML_Obj.lxml.getroot().nsmap
+
+        #Reduced Observations
+        tag = "//ReducedObservation"
+        Query1 = tag + "[@setupID='" + ObsID + "']"
+        Query2 = tag + "[@targetSetupID='" + ObsID + "']"
+        Observations = LandXML_Obj.lxml.findall(Query1, ns) + \
+                       LandXML_Obj.lxml.findall(Query2, ns)
+
+        # Reduced ArcObservations
+        tag = "//ReducedArcObservation"
+        Query1 = tag + "[@setupID='" + ObsID + "']"
+        Query2 = tag + "[@targetSetupID='" + ObsID + "']"
+        Observations = Observations + LandXML_Obj.lxml.findall(Query1, ns) + \
+                       LandXML_Obj.lxml.findall(Query2, ns)
+
+        return Observations
+
+
+
 
 
 def RemoveSelectedConnections(Observations, RemoveObs):

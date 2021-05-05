@@ -90,7 +90,7 @@ class RemoveTraverseDeadEnds:
         :param Observations: 
         :return: 
         '''
-
+        
         for key in Observations.__dict__.keys():
             Observation = Observations.__getattribute__(key)
             

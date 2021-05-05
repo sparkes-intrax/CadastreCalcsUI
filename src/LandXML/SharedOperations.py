@@ -39,7 +39,7 @@ def ApplyCloseAdjustment(traverse, LandXML_Obj, gui):
         #print("Misclose: " + str(round(1000 * close, 1)) + "mm")
         #print("")
 
-        if close_error > 100:
+        if close_error > 500:
             MessageBoxes.genericMessage(message, title)
         if LandXML_Obj.TraverseProps.ApplyCloseAdjustment and close_error < 500:
             TraverseClose.TraverseAdjustment(traverse, gui.CadastralPlan,

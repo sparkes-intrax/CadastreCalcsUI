@@ -106,10 +106,10 @@ class TraverseStart:
             return PntRefNum
 
         # Test connection observation connected to road frontage
-        tObj = Timer()
-        tObj.start()
+        #tObj = Timer()
+        #tObj.start()
         PntRefNum = self.CalculatedPoint()
-        tObj.stop("Road Parcel Connection search")
+        #tObj.stop("Road Parcel Connection search")
         if PntRefNum is False:
             self.QueryType = "RoadExtent"
         else:
@@ -118,10 +118,10 @@ class TraverseStart:
 
         #Test Road Query - known point and parcel observation with as
             #road frontage
-        tObj = Timer()
-        tObj.start()
+        #tObj = Timer()
+        #tObj.start()
         PntRefNum = self.CalculatedPoint()
-        tObj.stop("Road Extent Connection - old plans")
+        #tObj.stop("Road Extent Connection - old plans")
         if PntRefNum is False:
             self.QueryType = "Road"
         else:
@@ -151,10 +151,10 @@ class TraverseStart:
             return PntRefNum
 
         # Test if already calculated points have road frontage
-        tObj = Timer()
-        tObj.start()
+        #tObj = Timer()
+        #tObj.start()
         PntRefNum = self.CalculatedPoint()
-        tObj.stop("Calculated Point onto any road parcel - not a Lot")
+        #tObj.stop("Calculated Point onto any road parcel - not a Lot")
         if PntRefNum is False:
             self.QueryType = "RmAndBdy"
         else:
@@ -172,10 +172,10 @@ class TraverseStart:
             self.TraverseProps.RmBdyTraverseStart = True
             return PntRefNum
 
-        tObj = Timer()
-        tObj.start()
+        #tObj = Timer()
+        #tObj.start()
         PntRefNum = self.CalculatedPoint()
-        tObj.stop("Calculated Point connection to a boundary vertex")
+        #tObj.stop("Calculated Point connection to a boundary vertex")
         self.TraverseProps.RmBdyTraverseStart = False
         return PntRefNum
 
