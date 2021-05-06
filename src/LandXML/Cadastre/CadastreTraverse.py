@@ -9,6 +9,7 @@ Determines whether a close can be found that meets a set of criteria
 from LandXML.Cadastre import BdyTraverseStart
 from LandXML import Connections, SharedOperations
 from LandXML.Cadastre import BdyTraverseCalcs
+from timer import Timer
 
 from DrawingObjects import DrawTraverse
 
@@ -35,9 +36,13 @@ class CadastreTraverses:
         Calculates boundary traverse paths
         :return:
         '''
-
+        tObjAll = Timer()
+        tObjAll.start()
+        tObjStarts = Timer()
+        tObj = Timer()
         #1) Find first traverse start
         setattr(self.LandXML_Obj, "BdyStartChecks", BdyTraverseStartCheckList())
+        setattr(self.LandXML_Obj.TraverseProps, "RoadConnections", False)
         #2) Create traverse instance
         if self.LandXML_Obj.RefMarks:
             StartPoint = BdyTraverseStart.TraverseStartPoint(self.gui, self.LandXML_Obj, False)
@@ -51,6 +56,7 @@ class CadastreTraverses:
         while(MoreBdyTraverses):
 
             #Find a traverse path (to close)
+            tObj.start()
             traverseObj = BdyTraverseCalcs.TraverseCalcs(self.gui, self.LandXML_Obj,
                                                          StartPoint.PntRefNum)
             traversePath = traverseObj.FindPath(traverse)
@@ -59,7 +65,9 @@ class CadastreTraverses:
             try:
                 if len(traversePath.refPnts) > 2:
                     DrawTraverse.main(self.gui, traversePath, self.LandXML_Obj)
-                    self.gui = SharedOperations.ApplyCloseAdjustment(traverse,
+                    if traversePath.EndRefPnt is None:
+                        print("Checking")
+                    self.gui = SharedOperations.ApplyCloseAdjustment(traversePath,
                                                                      self.LandXML_Obj,
                                                                      self.gui)
                 elif len(traversePath.refPnts) == 2:
@@ -68,16 +76,21 @@ class CadastreTraverses:
             except AttributeError as err:
                 pass
                 #print("AttributeError: {0}".format(err))
-
+            tObj.stop("Traverse Closed", 1)
             #Get next start
+            tObjStarts.start()
             StartPoint = BdyTraverseStart.TraverseStartPoint(self.gui, self.LandXML_Obj, False)
 
             traverse, StartPoint = self.StartPointQuery(StartPoint)
+
             if traverse is None:
                 print("Found all boundary traverse Paths")
                 break
             else:
-                print("StartPoint: " + StartPoint.PntRefNum)
+                tObjStarts.stop("Found Start Point: " + StartPoint.PntRefNum, 1)
+            #    print("StartPoint: " + StartPoint.PntRefNum)
+
+        tObjAll.stop("Done!", 1)
 
 
     def StartPointQuery(self, StartPoint):

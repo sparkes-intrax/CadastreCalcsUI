@@ -45,7 +45,9 @@ class TraverseCalcs:
         setattr(self.Branches.CurrentBranch, "BranchName", self.PntRefNum)
         #TRack whether TRaversePath found
         TraverseFinished = False
-        
+
+        #tObj = Timer()
+        #tObj.start()
         #finds sides until closed
         while (not TraverseFinished):
             #print(self.PntRefNum)
@@ -81,9 +83,12 @@ class TraverseCalcs:
 
             #Handle a close when its found
             if ObservationObj.TraverseClose:
+                #tObj.stop("CloseFound", len(self.Branches.CurrentBranch.refPnts))
                 self.Branches.CurrentBranch.EndRefPnt = self.PntRefNum
                 if not self.CloseHandler():
                     return self.Branches.CurrentBranch
+                #else:
+                    #tObj.start()
 
             self.Observations = Connections.AllConnections(self.PntRefNum, self.LandXML_Obj)
     

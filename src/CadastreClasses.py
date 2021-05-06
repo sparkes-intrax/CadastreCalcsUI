@@ -205,6 +205,7 @@ class Traverse():
         self.PrimaryBranches = [] #branches in traverse of traverse type
         self.SecondaryBranches = [] #branches of other type (ie BDYs in RM traverse
         self.NonRmBranches = [] #only relevant for RM traverse
+        self.Observations = []
         self.Closed = False
         self.LineNum = 1
         self.MixedTraverse = False

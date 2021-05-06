@@ -29,7 +29,10 @@ def ApplyCloseAdjustment(traverse, LandXML_Obj, gui):
 
     if LandXML_Obj.TraverseProps.TraverseClose:
         N_Error, E_Error, close = TraverseClose.misclose(traverse, gui.CadastralPlan)
-        close_error = (close/traverse.Distance) * 1e6
+        if traverse.Distance != 0:
+            close_error = (close/traverse.Distance) * 1e6
+        else:
+            close_error = 0
         message = "Easting Misclose: " + str(round(1000 * E_Error, 1)) + "mm\n" \
                   "Northing Misclose: " + str(round(1000 * N_Error, 1)) + "mm\n" \
                   "Total Misclose: " + str(round(1000 * close, 1)) + "mm\n" \

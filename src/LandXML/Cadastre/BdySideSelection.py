@@ -47,26 +47,12 @@ class SideSelection:
                                                              self.LandXML_Obj.TraverseProps,
                                                              self.PntRefNum)
         #self.tObj.stop("Remove Already Calculated Connections")
-
-        #self.tObj.start()
-        self.Observations = RemoveDeadEnds.main(self.PntRefNum, 
-                                                self.Observations, 
-                                                self.LandXML_Obj, 
-                                                self.gui, 
-                                                self.traverse)
-        #self.tObj.stop("Remove DeadEnds")
-        #remove Easement boundaries
-        RemoveEasObj = RemoveEasements.RemoveEasementObservations(self.Observations,
-                                                                  self.PntRefNum,
-                                                                  self.LandXML_Obj)
-        self.Observations = RemoveEasObj.SearchObservations()
-        #Check to see if any observations are road frontage or boundary
-        #for when close found, starts next traverse fromm same spot
-        #self.tObj.start()
+        # Check to see if any observations are road frontage or boundary
+        # for when close found, starts next traverse fromm same spot
+        # self.tObj.start()
         if self.RoadsAndBoundaries():
             setattr(self.traverse, "NextStartPnt", self.PntRefNum)
-        #self.tObj.stop("Road and Boundary check for branches")
-            
+        # self.tObj.stop("Road and Boundary check for branches")
         #2) Check for close to RM (can't close on starting point??)
         #self.tObj.start()
         if self.TraverseCloseCheck("RM"):
@@ -77,6 +63,15 @@ class SideSelection:
         if self.TraverseCloseCheck("Connection"):
             return ObservationObj(self.Observations, self.PntRefNum)
         #self.tObj.stop("Connection Close check")
+        #self.tObj.start()
+
+        #self.tObj.stop("Remove DeadEnds")
+        #remove Easement boundaries
+        RemoveEasObj = RemoveEasements.RemoveEasementObservations(self.Observations,
+                                                                  self.PntRefNum,
+                                                                  self.LandXML_Obj)
+        self.Observations = RemoveEasObj.SearchObservations()        
+
         #3a) when an old plan sometime connections are defined as Road Extent
         #self.tObj.start()
         if not self.LandXML_Obj.RefMarks:
@@ -87,18 +82,30 @@ class SideSelection:
         #self.tObj.start()
         self.SidePriorities("RoadParcel")
         #self.tObj.stop("Road Parcel Priority")
-        #5) Check for any close
+        # 5) Boundary Observation (Observation desc="BOUNDARY")
+        self.SidePriorities("Bdy")
+        #select boundary observation of close bearing - if it exists
+        if len(self.Observations.__dict__.keys()) > 1:
+            self.BdyConnectionSelection()
+
+        #6) Check for any close
         #self.tObj.start()
         if self.TraverseCloseCheck("Any"):
             return ObservationObj(self.Observations, self.PntRefNum)
+
+        # Remove Dead Ends
+        self.Observations = RemoveDeadEnds.main(self.PntRefNum,
+                                                self.Observations,
+                                                self.LandXML_Obj,
+                                                self.gui,
+                                                self.traverse)
         #self.tObj.stop("Any Close check")
         #6) Check if branches and add to branch object (branches are only used when a close
             #can't be found, so cleared after close found)
         if len(self.Observations.__dict__.keys()) > 1:
             self.PrimaryBranch = True
         #self.SidePriorities("Road")
-        #7) Boundary Observation (Observation desc="BOUNDARY")
-        self.SidePriorities("Bdy")
+
         #8) Connection Observation (Observation desc="CONNECTION")
         self.SidePriorities("Connection")
         #9) Final Filter (Bearing then distance)
@@ -106,9 +113,9 @@ class SideSelection:
             self.FinalSelection()
         elif len(self.Observations.__dict__.keys()) == 0:
             if len(self.traverse.PrimaryBranches) > 0:
-                self.tObj.start()
+                #self.tObj.start()
                 self.GetNextBranch()
-                self.tObj.stop("Next Branch")
+                #self.tObj.stop("Next Branch")
             else:
                 return None
             
@@ -186,6 +193,37 @@ class SideSelection:
                 return True 
             
         return False
+
+    def BdyConnectionSelection(self):
+        '''
+        Check if more than one boundary observation remains
+         - remove any other connections
+         - if more than one boundary observation - select one with nearest bearing
+        :return:
+        '''
+
+        #Count number of boundary connections
+        BdyCounter = 0
+        for key in self.Observations.__dict__.keys():
+            Observation = self.Observations.__getattribute__(key)
+            if Observation.get("desc") == "Boundary":
+                BdyCounter += 1
+
+        #remove connection observations if required (when more than 1 bdy observation
+        if BdyCounter > 1 and BdyCounter < len(self.Observations.__dict__.keys()):
+            RemoveObs = []
+            for key in self.Observations.__dict__.keys():
+                Observation = self.Observations.__getattribute__(key)
+                if Observation.get("desc") == "Connection":
+                    RemoveObs.append(key)
+
+            #remove observations from self.Obs
+            self.Observations = Connections.RemoveSelectedConnections(self.Observations, RemoveObs)
+
+        #Select Observation with close bearing
+        if BdyCounter > 1:
+            FinalFilterObj = FinalConnectionFilter.FinalFilter(self.traverse, self.LandXML_Obj.TraverseProps)
+            self.Observations = FinalFilterObj.SimilarBearingConnection(self.Observations)
 
     def FinalSelection(self):
         '''

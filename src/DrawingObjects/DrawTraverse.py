@@ -25,7 +25,8 @@ def main(gui, traverse, LandXML_Obj):
     DataCommitObject.AddPoints()
     DataCommitObject.AddLines()
     DataCommitObject.AddTraverses()
-    DataCommitObject.AddPointsToList()
+    DataCommitObject.RemoveObservations()
+    #DataCommitObject.AddPointsToList()
 
     #get instance of DarwTraverse
     DrawObject = DrawTraverse(gui, traverse)
@@ -229,8 +230,9 @@ class DataCommit:
             point = self.traverse.Points.__getattribute__(key)
             if not point.__class__.__name__ == "Point":
                 continue
-            self.PointsAdd.append(point.PntNum)
             setattr(self.CadastralPlan.Points, key, point)
+            if point.PntNum not in self.CadastralPlan.Points.PointList:
+                self.CadastralPlan.Points.PointList.append(point.PntNum)
 
     def AddLines(self):
         '''
@@ -256,6 +258,16 @@ class DataCommit:
         TravName = "Traverse" +"_" + self.traverse.type + "_" +str(TraverseNum)
         setattr(self.CadastralPlan.Traverses, TravName, self.traverse)
         setattr(self.CadastralPlan.Traverses, "TraverseCounter", (TraverseNum+1))
+
+    def RemoveObservations(self):
+        '''
+        Removes Observations being added to the CadastralPlan from
+        LandXML_Obj.ReducedObservations
+        :return:
+        '''
+        for Observation in self.traverse.Observations:
+            Observation.getparent().remove(Observation)
+
 
     def GetPointNumber(self):
         '''

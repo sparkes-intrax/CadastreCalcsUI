@@ -4,6 +4,7 @@ Set of functions and methods to query a boundary point
 from LandXML import Connections, RemoveCalculatedConnections, BDY_Connections
 import CadastreClasses as DataObjects
 from LandXML.Easements import RemoveEasements
+from timer import Timer
 
 def main(LandXML_Obj, PntRefNum, gui, Query, RM_Connection):
     '''
@@ -32,11 +33,15 @@ def main(LandXML_Obj, PntRefNum, gui, Query, RM_Connection):
                                                               LandXML_Obj)
     Observations = RemoveEasObj.SearchObservations()
     if len(Observations.__dict__.keys()) == 0:
+        gui.CadastralPlan.Points.PointList.remove(PntRefNum)
         return False
     
     # Loop through available observations
+    #tObj = Timer()
     if RM_Connection:
         #tests connections to the RM connection
+
+        #tObj.start()
         for key in Observations.__dict__.keys():
             Observation = Observations.__getattribute__(key)
             desc = Observation.get("desc")
@@ -63,11 +68,15 @@ def main(LandXML_Obj, PntRefNum, gui, Query, RM_Connection):
 
             if RunQueryObj.CoordinateQuery():
                 return True
+        #tObj.stop("RM searches")
     else:
         #tests connections to PntRefNum
+        #tObj.start()
         RunQueryObj = RunQuery(Observations, LandXML_Obj, Query, PntRefNum)#, RM_Connection)
         if RunQueryObj.CoordinateQuery():
             return True
+
+        #tObj.stop("Non RM start query")
             
 
     return False

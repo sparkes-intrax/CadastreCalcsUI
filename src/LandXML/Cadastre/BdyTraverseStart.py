@@ -188,6 +188,8 @@ class TraverseStart:
         for monument in self.LandXML_Obj.Monuments.getchildren():
             MonumentType = monument.get("type")
             PntRefNum = monument.get("pntRef")
+            if PntRefNum not in self.gui.CadastralPlan.Points.PointList:
+                continue
             #check monument is an RM
             if MonumentType == "SSM" or MonumentType == "PM" or \
                      MonumentType == "TS":

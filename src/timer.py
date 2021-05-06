@@ -17,12 +17,12 @@ class Timer:
 
         self._start_time = time.perf_counter()
 
-    def stop(self, Operation):
+    def stop(self, Operation, NumPoints):
         """Stop the timer, and report the elapsed time"""
         if self._start_time is None:
             raise TimerError(f"Timer is not running. Use .start() to start it")
 
-        elapsed_time = time.perf_counter() - self._start_time
+        elapsed_time = (time.perf_counter() - self._start_time)/NumPoints
         self._start_time = None
         if elapsed_time > 0.0:
             print(Operation)

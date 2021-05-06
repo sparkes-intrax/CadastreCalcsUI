@@ -50,11 +50,11 @@ class RemoveConnections:
         for key in self.Observations.__dict__.keys():
             connection = self.Observations.__getattribute__(key)
             # check if cadastralPlan contains connection
-            if self.CheckLinesObject(connection, self.CadastralPlan.Lines, key):
-                RemoveObs.append(key)
+            #if self.CheckLinesObject(connection, self.CadastralPlan.Lines, key):
+            #    RemoveObs.append(key)
             # check if traverse already contains connection or end point is traverse midpoint
             #elif self.traverse is not None:
-            elif self.CheckLinesObject(connection, self.traverse.Lines, key):
+            if self.CheckLinesObject(connection, self.traverse.Lines, key):
                     RemoveObs.append(key)
 
             #Check cadastral plan point objects

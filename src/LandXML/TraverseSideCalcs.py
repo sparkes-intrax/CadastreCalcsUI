@@ -32,6 +32,7 @@ class TraverseSide:
                 self.Connection = Connection
 
         self.ObsName = self.Connection.get("name")
+        self.traverse.Observations.append(self.Connection)
         self.gui = gui
         self.LandXML_Obj = LandXML_Obj
         self.CalcPointCoordsWorkflow()
