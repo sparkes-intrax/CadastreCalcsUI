@@ -4,15 +4,16 @@ Methods to select an observation from the LandXML file that
 '''
 from LandXML import RemoveCalculatedConnections, TraverseClose, Connections, \
                     FinalConnectionFilter, BranchOperations, NoConnection, BDY_Connections, \
-                    RemoveDeadEnds
+                    RemoveDeadEnds, TraverseSideCalcs
 from LandXML.Cadastre import BdyQueries, BdyNextBranch
 from LandXML.Easements import RemoveEasements
+from LandXML.RefMarks import RefMarkQueries
 from timer import Timer
 
 
 class SideSelection:
     def __init__(self, Observations, traverse, LandXML_Obj,
-                 CadastralPlan, PntRefNum, Branches, gui):
+                 CadastralPlan, PntRefNum, Branches, gui, TriedConnections):
         '''
         Finds a side after filtering based on priorities
         :param Observations:
@@ -31,6 +32,8 @@ class SideSelection:
         self.gui = gui
         self.TraverseClose = False
         self.PrimaryBranch = False
+        self.TriedConnections = TriedConnections
+        #self.SecondaryBranch = False
         self.tObj = Timer()
 
     def PrioritiseObservations(self):
@@ -46,6 +49,10 @@ class SideSelection:
                                                              self.traverse,
                                                              self.LandXML_Obj.TraverseProps,
                                                              self.PntRefNum)
+
+
+        # Remove Single Connection RefMarks
+        self.RemoveSingleConnectionRms()
         #self.tObj.stop("Remove Already Calculated Connections")
         # Check to see if any observations are road frontage or boundary
         # for when close found, starts next traverse fromm same spot
@@ -78,6 +85,10 @@ class SideSelection:
             if self.TraverseCloseCheck("RoadExtent"):
                 return ObservationObj(self.Observations, self.PntRefNum)
         #self.tObj.stop("Close for RoadExtent Connection")
+
+        #Add a secondary branch tracker
+        if len(self.Observations.__dict__.keys()) > 1:
+            self.PrimaryBranch = True
         #4) Priotise a road frontage that is part of a parcel of the subdivision
         #self.tObj.start()
         self.SidePriorities("RoadParcel")
@@ -93,17 +104,18 @@ class SideSelection:
         if self.TraverseCloseCheck("Any"):
             return ObservationObj(self.Observations, self.PntRefNum)
 
-        # Remove Dead Ends
+        #Remove dead end connections - picks up connections missed by RM check
         self.Observations = RemoveDeadEnds.main(self.PntRefNum,
                                                 self.Observations,
                                                 self.LandXML_Obj,
                                                 self.gui,
                                                 self.traverse)
+
         #self.tObj.stop("Any Close check")
         #6) Check if branches and add to branch object (branches are only used when a close
             #can't be found, so cleared after close found)
-        if len(self.Observations.__dict__.keys()) > 1:
-            self.PrimaryBranch = True
+        #if len(self.Observations.__dict__.keys()) > 1:
+        #    self.PrimaryBranch = True
         #self.SidePriorities("Road")
 
         #8) Connection Observation (Observation desc="CONNECTION")
@@ -112,15 +124,26 @@ class SideSelection:
         if len(self.Observations.__dict__.keys()) > 1:
             self.FinalSelection()
         elif len(self.Observations.__dict__.keys()) == 0:
-            if len(self.traverse.PrimaryBranches) > 0:
+            if len(self.traverse.PrimaryBranches) > 0 or \
+                    len(self.traverse.SecondaryBranches) > 0:
+                #When all observations have been removed try another branch
+                #Add starting branch to tried connections
+                self.AddToTriedConnections()
                 #self.tObj.start()
-                self.GetNextBranch()
+                self.NoConnectionHandler()
+                #No branch can be found
+                if len(self.Observations.__dict__.keys()) == 0:
+                    return None
+                #check for closes
+                if self.CheckAllCloses():
+                    return ObservationObj(self.Observations, self.PntRefNum)
                 #self.tObj.stop("Next Branch")
             else:
+                self.AddToTriedConnections()
                 return None
             
         #add branch instance if found
-        if self.PrimaryBranch:
+        if self.PrimaryBranch:# or self.SecondaryBranch:
             self.AddBranch()
 
         return ObservationObj(self.Observations, self.PntRefNum)
@@ -267,8 +290,24 @@ class SideSelection:
         AddBranchObj = BranchOperations.AddBranch(self, self.Branches, self.traverse,
                                                   self.PntRefNum, self.LandXML_Obj, Observation)
         self.Branches, self.traverse = AddBranchObj.AddBranchInstance()
+
+    def NoConnectionHandler(self):
+        '''
+        Handles when filters all connections
+        Goes back to last branch
+        :return:
+        '''
+
+        # try primary branches in traverse first
+        if len(self.Observations.__dict__.keys()) == 0 and \
+                len(self.traverse.PrimaryBranches) > 0:
+            self.traverse.PrimaryBranches = self.GetNextBranch(self.traverse.PrimaryBranches)
+        # try SECONDARY branches in traverse
+        if len(self.Observations.__dict__.keys()) == 0 and \
+                len(self.traverse.SecondaryBranches) > 0:
+            self.traverse.SecondaryBranches = self.GetNextBranch(self.traverse.SecondaryBranches)
         
-    def GetNextBranch(self):
+    def GetNextBranch(self, BranchList):
         '''
         Called when a dead end is found loads up last traverse branch instance
         :return: 
@@ -277,36 +316,112 @@ class SideSelection:
         #while loop to keep searching until total observations are not 1
         TotalObservations = 0
         while (TotalObservations == 0):
-            self.PrimaryBranch = False
             #Get next branch instance - already calc'd connections plus the branch tried
                 #deleted
             self.Observations, self.PntRefNum, self.traverse,\
                 BranchList = \
-                BdyNextBranch.main(self.traverse.PrimaryBranches, self.Observations,
+                BdyNextBranch.main(BranchList, self.Observations,
                                   self.CadastralPlan, self.traverse,
-                                  self.Branches, self.LandXML_Obj)
-            self.traverse.PrimaryBranches = BranchList
-            
+                                  self.Branches, self.LandXML_Obj, self)
+
+
+            if len(BranchList) == 0 and self.PntRefNum is None:
+                return BranchList
+
+            self.PrimaryBranch = False
+            self.RemoveSingleConnectionRms()
+            #self.SecondaryBranch = False
+            #self.traverse.PrimaryBranches = BranchList
+            if len(self.Observations.__dict__.keys()) > 1:
+                self.PrimaryBranch = True
             #apply remaining filters
             self.SidePriorities("RoadParcel")
             #trigger branch
-            if len(self.Observations.__dict__.keys()) > 1:
-                self.PrimaryBranch = True
+            #if len(self.Observations.__dict__.keys()) > 1:
+            #    self.PrimaryBranch = True
             self.SidePriorities("Bdy")
             # 8) Connection Observation (Observation desc="CONNECTION")
             self.SidePriorities("Connection")
+
+
             # 9) Final Filter (Bearing then distance)
             if len(self.Observations.__dict__.keys()) > 1:
                 self.FinalSelection()
 
-            # add branch instance if found
-            if self.PrimaryBranch:
-                self.AddBranch()
-                
             TotalObservations = len(self.Observations.__dict__.keys())
 
+        # add branch instance if found
+        if self.PrimaryBranch:# or self.SecondaryBranch:
+            self.AddBranch()
+            if len(self.traverse.refPnts) == 0:
+                self.traverse.refPnts.append(self.CadastralPlan)
+                
+
         self.PrimaryBranch = False
+        self.SecondaryBranch = False
+
+        return BranchList
+
+    def RemoveSingleConnectionRms(self):
+        '''
+        Checks if any of the Observations are to dead end RMs
+        :return:
+        '''
+        self.LandXML_Obj.TraverseProps.RoadConnections = True
+
+        RemoveObs = []  # List of observations to be removed
+        for key in self.Observations.__dict__.keys():
+            Observation = self.Observations.__getattribute__(key)
+
+            TargetID = Connections.GetTargetID(Observation, self.PntRefNum, self.LandXML_Obj.TraverseProps)
+            ObservationChecker = BDY_Connections.CheckBdyConnection(TargetID, self.LandXML_Obj)
+            ObservationChecker.ExistingLots = True
+
+            self.LandXML_Obj.TraverseProps.RoadConnections = False
+
+            if RefMarkQueries.CheckIfConnectionMark(self.LandXML_Obj, TargetID) and \
+                not ObservationChecker.BdyConnection(TargetID):                
+                RemoveObs.append(key)
+
+        #Remove found connections
+        if len(RemoveObs) > 0:
+            self.Observations = Connections.RemoveSelectedConnections(self.Observations, RemoveObs)
+
+    def CheckAllCloses(self):
+        '''
+        After finding a new branch this function is called to figure out if a close can
+        be found for the branch
+        :return:
+        '''
+
+        if self.TraverseCloseCheck("RM"):
+            return True
+
+        if self.TraverseCloseCheck("Connection"):
+            return True
+
+        if self.TraverseCloseCheck("Any"):
+            return True
+
+        return False
+
+
+    def AddToTriedConnections(self):
+        '''
+        Checks if tried connections contains starting connection of traverse
+        If it doesn't it is added
+        :return:
+        '''
         
+        #check tried connections
+        StartingObservation = self.traverse.Observations[0]
+        if StartingObservation not in self.TriedConnections:
+            #StartRefNum = self.traverse.refPnts[0]
+            #SideObj = TraverseSideCalcs.TraverseSide(StartRefNum,
+            #                                         self.traverse, StartingObservation,
+            #                                         self.gui, self.LandXML_Obj)
+            self.TriedConnections.append(StartingObservation)
+
 
 class ObservationObj:
     def __init__(self, Observations, PntRefNum):

@@ -81,8 +81,7 @@ def CheckIfConnectionMark(LandXML_Obj, PntRefNum):
     :param PntRefNum:
     :return: Bool
     '''
-    AcceptedMonumentList = ["Peg", "Nail", "Post", "Not Marked", "GIN", "Approved Mark",
-                            "DH"]
+    AcceptedMonumentList = ["CB", "GIP", "DH&W"]
 
     for monument in LandXML_Obj.Monuments.getchildren():
         if monument.get("pntRef") == PntRefNum and \

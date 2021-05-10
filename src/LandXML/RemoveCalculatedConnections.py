@@ -56,18 +56,22 @@ class RemoveConnections:
             #elif self.traverse is not None:
             if self.CheckLinesObject(connection, self.traverse.Lines, key):
                     RemoveObs.append(key)
+                    continue
 
             #Check cadastral plan point objects
             # stops taking a single connection traverse close
             elif self.CheckPointsObject(connection, self.CadastralPlan.Points):
                 RemoveObs.append(key)
+                continue
 
             elif self.TraverseProps.TraverseClose:
                 #if self.traverse is not None:
                 if self.CheckLinesObject(connection, self.traverse.TriedConnections, key):
                     RemoveObs.append(key)
+                    continue
                 elif self.CheckLinesObject(connection, self.CadastralPlan.TriedConnections, key):
                     RemoveObs.append(key)
+                    continue
             # check
         # remove any observation collected in RemoveObs(Already calc'd)
         if len(RemoveObs) > 0:

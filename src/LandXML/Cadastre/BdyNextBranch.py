@@ -6,7 +6,7 @@ from TraverseOperations import CopyTraverseInstance
 from LandXML import Connections, RemoveCalculatedConnections
 
 def main(BranchList, Observations, CadastralPlan, traverse, 
-         Branches, LandXML_Obj):
+         Branches, LandXML_Obj, ConnectionFinder):
     '''
     Coorindates workflow to find the next branch along a traverse to try
     :param BranchList:
@@ -19,9 +19,9 @@ def main(BranchList, Observations, CadastralPlan, traverse,
     #get observations from branch
 
     FindBranchObj = FindBranch(CadastralPlan, BranchList, traverse, Branches,
-                               LandXML_Obj)
+                               LandXML_Obj, ConnectionFinder)
     PntRefNum = None
-    NewTraverse = None
+    NewTraverse = CopyTraverseInstance.TraverseCopy(traverse)
     while (len(Observations.__dict__.keys()) == 0):
         try:
             Branch = BranchList[-1]
@@ -35,7 +35,7 @@ def main(BranchList, Observations, CadastralPlan, traverse,
 
 class FindBranch:
     def __init__(self, CadastralPlan, BranchList,
-                 traverse, Branches, LandXML_Obj):
+                 traverse, Branches, LandXML_Obj, ConnectionFinder):
 
         self.CadastralPlan = CadastralPlan
         self.BranchList = BranchList
@@ -43,6 +43,7 @@ class FindBranch:
         self.Branches = Branches
         self.LandXML_Obj = LandXML_Obj
         self.TraverseProps = LandXML_Obj.TraverseProps
+        self.ConnectionFinder = ConnectionFinder
         
     def RetrieveBranch(self, Branch):
         self.Branch = Branch
@@ -64,7 +65,10 @@ class FindBranch:
         setattr(self.NewTraverse, "BranchName", self.PntRefNum)
 
         #remove start of branch from any branch lists
-        self.NewTraverse.PrimaryBranches.remove(self.PntRefNum)
+        if len(self.NewTraverse.PrimaryBranches) > 0:
+            self.NewTraverse.PrimaryBranches.remove(self.Branch)
+        else:
+            self.NewTraverse.SecondaryBranches.remove(self.Branch)
 
 
     def FindAndDeleteTriedBranch(self):

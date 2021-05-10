@@ -21,6 +21,7 @@ class TraverseCalcs:
         '''
 
         #self.traverse = traverse
+        self.TriedConnections = []
         self.CadastralPlan = gui.CadastralPlan
         self.gui = gui
         self.LandXML_Obj = LandXML_Obj
@@ -50,9 +51,7 @@ class TraverseCalcs:
         #tObj.start()
         #finds sides until closed
         while (not TraverseFinished):
-            #print(self.PntRefNum)
-            if self.PntRefNum == '2239':
-                print("stop")
+
             setattr(self.Branches.CurrentBranch, "NextStartPnt", None)
             #select observation from self.Observations - apply priorities
             #self.tObj.start()
@@ -61,11 +60,14 @@ class TraverseCalcs:
                                                          self.LandXML_Obj, 
                                                          self.gui.CadastralPlan, 
                                                          self.PntRefNum,
-                                                            self.Branches, self.gui)
+                                                            self.Branches, self.gui,
+                                                            self.TriedConnections)
             Observation = ObservationObj.PrioritiseObservations()
             #self.tObj.stop("Bdy Side Selection")
             #check if an observation was selected
             if Observation is None:
+                if len(self.TriedConnections) > 0:
+                    self.AddTriedConnections()
                 break
 
             self.Branches.CurrentBranch = ObservationObj.traverse
@@ -116,6 +118,29 @@ class TraverseCalcs:
         else:
             return False
 
+    def AddTriedConnections(self):
+        '''
+        when a close can't be found the tried connections
+        are add to Cadastral Plan
+        :return:
+        '''
+
+        for Obs in self.TriedConnections:
+            #set pntrefNum - always from start of traverse
+            PntRefNum = self.Branches.CurrentBranch.ParentBranch
+            # Calculate the side of the tried connection and its line oject
+            SideObj = TraverseSideCalcs.TraverseSide(PntRefNum,
+                                                   self.Branches.CurrentBranch,
+                                                   Obs,
+                                                   self.gui,
+                                                   self.LandXML_Obj)
+
+            #check Observation hasn't already been added to tried Observations
+            if not hasattr(self.CadastralPlan.TriedConnections, Obs.get("name")):
+                setattr(self.CadastralPlan.TriedConnections, Obs.get("name"), SideObj.line)
+                print("added tried connection")
+
+
 class StartPoint:
     def __init__(self, gui, PntRefNum):
         point = gui.CadastralPlan.Points.__getattribute__(PntRefNum)
@@ -131,4 +156,3 @@ class BranchesObj:
         self.CurrentBranch = traverse
         setattr(self.CurrentBranch, "BranchName", PntRefNum)
         setattr(self.CurrentBranch, "ParentBranch", PntRefNum)
-    pass

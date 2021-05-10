@@ -61,7 +61,7 @@ class RemoveTraverseDeadEnds:
             #check if the TargObs has more than one observations - if not  = dead end
             if len(TargObs.__dict__.keys()) == 0:
                 #if RefMarkQueries.CheckIfRefMark(self.LandXML_Obj, TargetID):
-                self.AddRmDeadEndToTriedConecctions(Observation)
+                #self.AddRmDeadEndToTriedConecctions(Observation)
 
 
                 DeadEnds.append(key)

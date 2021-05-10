@@ -78,7 +78,7 @@ class FinalFilter:
                 azimuth = self.FlipBearing(float(Connections.GetObservationAzimuth(connection)))
 
             # test of bearing with 45 degrees
-            if abs(LastBearing - azimuth) > 45:
+            if abs(LastBearing - azimuth) > 60:
                 ConnectionList.append(key)
 
         return ConnectionList

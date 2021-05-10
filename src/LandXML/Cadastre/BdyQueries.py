@@ -14,8 +14,8 @@ def main(LandXML_Obj, PntRefNum, gui, Query, RM_Connection):
     :param Query: 
     :return: 
     '''
-    #if PntRefNum == "194":
-    #    print("Stop")
+    if PntRefNum == "6246":
+        print("Stop")
     # Get connections from PntRefNum
     Observations = Connections.AllConnections(PntRefNum, LandXML_Obj)
     # Remove already calculated connections
@@ -45,7 +45,7 @@ def main(LandXML_Obj, PntRefNum, gui, Query, RM_Connection):
         for key in Observations.__dict__.keys():
             Observation = Observations.__getattribute__(key)
             desc = Observation.get("desc")
-            
+
             if desc == "Connection" or desc == "Road Extent" or \
                     desc == "Reference":
                 # Get TargetID for Observation

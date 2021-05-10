@@ -7,7 +7,7 @@ Determines whether a close can be found that meets a set of criteria
 
 '''
 from LandXML.Cadastre import BdyTraverseStart
-from LandXML import Connections, SharedOperations
+from LandXML import Connections, SharedOperations, ConnectionMopper
 from LandXML.Cadastre import BdyTraverseCalcs
 from timer import Timer
 
@@ -43,6 +43,8 @@ class CadastreTraverses:
         #1) Find first traverse start
         setattr(self.LandXML_Obj, "BdyStartChecks", BdyTraverseStartCheckList())
         setattr(self.LandXML_Obj.TraverseProps, "RoadConnections", False)
+        setattr(self.LandXML_Obj.TraverseProps, "MixedTraverse", False)
+        setattr(self.LandXML_Obj.TraverseProps, "TraverseClose", True)
         #2) Create traverse instance
         if self.LandXML_Obj.RefMarks:
             StartPoint = BdyTraverseStart.TraverseStartPoint(self.gui, self.LandXML_Obj, False)
@@ -85,8 +87,11 @@ class CadastreTraverses:
 
             if traverse is None:
                 print("Found all boundary traverse Paths")
+                #MopObj = ConnectionMopper.ObservationMop(self.gui.CadastralPlan, self.LandXML_Obj)
                 break
             else:
+                if StartPoint.PntRefNum == "79":
+                    print("hereh")
                 tObjStarts.stop("Found Start Point: " + StartPoint.PntRefNum, 1)
             #    print("StartPoint: " + StartPoint.PntRefNum)
 

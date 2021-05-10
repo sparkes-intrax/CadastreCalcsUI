@@ -74,6 +74,7 @@ class TraverseStart:
         #Loop through monuments checking for first SSM/PM with a parcel connection
         for monument in self.LandXML_Obj.Monuments.getchildren():
             MarkType = monument.get("type")
+
             if MarkType == "SSM" or MarkType == "PM":                
                 Observations = Connections.AllConnections(monument.get("pntRef"), self.LandXML_Obj)
                 setattr(ConnectionChecker, "PntRefNum", monument.get("pntRef"))

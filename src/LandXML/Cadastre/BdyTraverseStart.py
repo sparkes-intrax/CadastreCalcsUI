@@ -120,7 +120,7 @@ class TraverseStart:
             #road frontage
         #tObj = Timer()
         #tObj.start()
-        PntRefNum = self.CalculatedPoint()
+        PntRefNum = self.CalculatedRM()
         #tObj.stop("Road Extent Connection - old plans")
         if PntRefNum is False:
             self.QueryType = "Road"
