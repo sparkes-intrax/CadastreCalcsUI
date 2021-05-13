@@ -105,7 +105,8 @@ class SideSelection:
             return ObservationObj(self.Observations, self.PntRefNum)
 
         #Remove dead end connections - picks up connections missed by RM check
-        self.Observations = RemoveDeadEnds.main(self.PntRefNum,
+        if self.LandXML_Obj.TraverseProps.TraverseClose:
+            self.Observations = RemoveDeadEnds.main(self.PntRefNum,
                                                 self.Observations,
                                                 self.LandXML_Obj,
                                                 self.gui,
@@ -124,11 +125,16 @@ class SideSelection:
         if len(self.Observations.__dict__.keys()) > 1:
             self.FinalSelection()
         elif len(self.Observations.__dict__.keys()) == 0:
-            if len(self.traverse.PrimaryBranches) > 0 or \
+            #if len(self.traverse.Observations) > 0:
+            #    self.AddToTriedConnections()
+            if not self.LandXML_Obj.TraverseProps.TraverseClose:
+                return None
+            elif len(self.traverse.PrimaryBranches) > 0 or \
                     len(self.traverse.SecondaryBranches) > 0:
                 #When all observations have been removed try another branch
                 #Add starting branch to tried connections
-                self.AddToTriedConnections()
+                if len(self.traverse.Observations) > 0:
+                    self.AddToTriedConnections()
                 #self.tObj.start()
                 self.NoConnectionHandler()
                 #No branch can be found
@@ -139,7 +145,8 @@ class SideSelection:
                     return ObservationObj(self.Observations, self.PntRefNum)
                 #self.tObj.stop("Next Branch")
             else:
-                self.AddToTriedConnections()
+                if len(self.traverse.Observations) > 0:
+                    self.AddToTriedConnections()
                 return None
             
         #add branch instance if found
@@ -180,7 +187,7 @@ class SideSelection:
         QueryObj = BdyQueries.RunQuery(self.Observations,
                                        self.LandXML_Obj,
                                        Query,
-                                       self.PntRefNum)
+                                       self.PntRefNum, self.CadastralPlan)
         #List of Observations without road frontage
         RemoveObservations = []
         for key in self.Observations.__dict__.keys():
@@ -374,14 +381,21 @@ class SideSelection:
             Observation = self.Observations.__getattribute__(key)
 
             TargetID = Connections.GetTargetID(Observation, self.PntRefNum, self.LandXML_Obj.TraverseProps)
+            TargObs = Connections.AllConnections(TargetID, self.LandXML_Obj)
+            #check if Target ID is a boundary
             ObservationChecker = BDY_Connections.CheckBdyConnection(TargetID, self.LandXML_Obj)
             ObservationChecker.ExistingLots = True
 
-            self.LandXML_Obj.TraverseProps.RoadConnections = False
+            #self.LandXML_Obj.TraverseProps.RoadConnections = False
 
             if RefMarkQueries.CheckIfConnectionMark(self.LandXML_Obj, TargetID) and \
-                not ObservationChecker.BdyConnection(TargetID):                
+                not ObservationChecker.BdyConnection(TargetID) and \
+                    len(TargObs.__dict__.keys()) <= 1:
                 RemoveObs.append(key)
+
+            #if len(TargObs.__dict__.keys()) <= 1:
+            #    RemoveObs.append(key)
+
 
         #Remove found connections
         if len(RemoveObs) > 0:
@@ -415,12 +429,12 @@ class SideSelection:
         
         #check tried connections
         StartingObservation = self.traverse.Observations[0]
-        if StartingObservation not in self.TriedConnections:
-            #StartRefNum = self.traverse.refPnts[0]
-            #SideObj = TraverseSideCalcs.TraverseSide(StartRefNum,
-            #                                         self.traverse, StartingObservation,
-            #                                         self.gui, self.LandXML_Obj)
-            self.TriedConnections.append(StartingObservation)
+        if not hasattr(self.TriedConnections, StartingObservation.get("name")):
+            StartRefNum = self.traverse.refPnts[0]
+            SideObj = TraverseSideCalcs.TraverseSide(StartRefNum,
+                                                     self.traverse, StartingObservation,
+                                                     self.gui, self.LandXML_Obj)
+            setattr(self.TriedConnections, StartingObservation.get("name"), SideObj.line)
 
 
 class ObservationObj:

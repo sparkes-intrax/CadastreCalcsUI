@@ -65,15 +65,12 @@ class CadastreTraverses:
 
             #add traverse to CadastralPlan
             try:
-                if len(traversePath.refPnts) > 2:
+                if len(traversePath.refPnts) >= 2:
                     DrawTraverse.main(self.gui, traversePath, self.LandXML_Obj)
-                    if traversePath.EndRefPnt is None:
-                        print("Checking")
-                    self.gui = SharedOperations.ApplyCloseAdjustment(traversePath,
+                    if len(traversePath.refPnts) > 2 and self.LandXML_Obj.TraverseProps.TraverseClose:
+                        self.gui = SharedOperations.ApplyCloseAdjustment(traversePath,
                                                                      self.LandXML_Obj,
                                                                      self.gui)
-                elif len(traversePath.refPnts) == 2:
-                    DrawTraverse.SingelConnection(self.gui, traversePath)
                     
             except AttributeError as err:
                 pass
@@ -86,11 +83,24 @@ class CadastreTraverses:
             traverse, StartPoint = self.StartPointQuery(StartPoint)
 
             if traverse is None:
-                print("Found all boundary traverse Paths")
-                #MopObj = ConnectionMopper.ObservationMop(self.gui.CadastralPlan, self.LandXML_Obj)
-                break
+                if self.LandXML_Obj.TraverseProps.TraverseClose:
+                    self.LandXML_Obj.TraverseProps.TraverseClose = False
+
+                numTriedConnections = len((self.gui.CadastralPlan.TriedConnections.__dict__.keys()))
+                if numTriedConnections > 1:
+                    StartPoint = GetTriedConnections(self.gui)
+                    traverse, StartPoint = self.StartPointQuery(StartPoint)
+                    if traverse is None:
+                        print("Found all boundary traverse Paths")
+                        break
+                    else:
+                        tObjStarts.stop("Found Start Point: " + StartPoint.PntRefNum, 1)
+                else:
+                    print("Found all boundary traverse Paths")
+                    #MopObj = ConnectionMopper.ObservationMop(self.gui.CadastralPlan, self.LandXML_Obj)
+                    break
             else:
-                if StartPoint.PntRefNum == "79":
+                if StartPoint.PntRefNum == "6":
                     print("hereh")
                 tObjStarts.stop("Found Start Point: " + StartPoint.PntRefNum, 1)
             #    print("StartPoint: " + StartPoint.PntRefNum)
@@ -142,6 +152,38 @@ class CadastreTraverses:
             MessageBoxes.genericMessage(message, title)
             TraverseClose.TraverseAdjustment(traverse, self.gui.CadastralPlan,
                                              E_Error, N_Error)
+
+class GetTriedConnections:
+    def __init__(self, gui):
+        '''
+        Gets Tried connections and returns start point
+        :return:
+        '''
+
+        for key in gui.CadastralPlan.TriedConnections.__dict__.keys():
+            Obs = gui.CadastralPlan.TriedConnections.__getattribute__(key)
+            if Obs.__class__.__name__ != "Line":
+                continue
+
+            #Get the start point
+            PntRefNum = Obs.__getattribute__("StartRef")
+            self.GetStartPoint(PntRefNum, gui)
+            break
+
+        #remove tried connection
+        delattr(gui.CadastralPlan.TriedConnections, key)
+
+
+
+    def GetStartPoint(self, PntRefNum, gui):
+
+        point = gui.CadastralPlan.Points.__getattribute__(PntRefNum)
+        self.PntRefNum = PntRefNum
+        self.Easting = point.E
+        self.Northing = point.N
+        self.NorthingScreen = point.NorthingScreen
+        self.Layer = point.Layer
+        self.Code = point.Code
 
 
 class BdyTraverseStartCheckList:

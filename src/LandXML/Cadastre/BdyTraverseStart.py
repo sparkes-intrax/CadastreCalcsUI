@@ -176,7 +176,17 @@ class TraverseStart:
         #tObj.start()
         PntRefNum = self.CalculatedPoint()
         #tObj.stop("Calculated Point connection to a boundary vertex")
+        
+        
+        if PntRefNum is False:
+            self.QueryType = "Any"
+        else:
+            self.TraverseProps.RmBdyTraverseStart = False
+            return  PntRefNum
+        
+        PntRefNum = self.CalculatedPoint()
         self.TraverseProps.RmBdyTraverseStart = False
+            
         return PntRefNum
 
     def CalculatedRM(self):
@@ -185,6 +195,7 @@ class TraverseStart:
         :return:
         '''
 
+        RemovePntList = []
         for monument in self.LandXML_Obj.Monuments.getchildren():
             MonumentType = monument.get("type")
             PntRefNum = monument.get("pntRef")
@@ -196,10 +207,19 @@ class TraverseStart:
                 #check if RM has been calculated in RM traverse
                 if hasattr(self.gui.CadastralPlan.Points, PntRefNum):
                     #Query the boundaries connected to RM
-                    if BdyQueries.main(self.LandXML_Obj, PntRefNum,
-                                       self.gui, self.QueryType, True):
+                    QueryResult = BdyQueries.main(self.LandXML_Obj, PntRefNum,
+                                       self.gui, self.QueryType, True)
+
+                    #print(QueryResult.__class__.__name__)
+                    if QueryResult.__class__.__name__ == "str":
+                        RemovePntList.append(PntRefNum)
+                    elif QueryResult:
+                        if len(RemovePntList) > 0:
+                            self.RemovePointsWithNoConnections(RemovePntList)
                         return PntRefNum
 
+        if len(RemovePntList) > 0:
+            self.RemovePointsWithNoConnections(RemovePntList)
 
         return False
 
@@ -208,9 +228,12 @@ class TraverseStart:
         Checks calculated points (not RMs) for a traverse start
         :return:
         '''
-
+        
+        RemovePntList = []
         for point in self.gui.CadastralPlan.Points.PointList:
             #check point is not RM
+            #f point == "66":
+            #    print("Stop")
             if not RefMarkQueries.CheckIfRefMark(self.LandXML_Obj, point.split("_")[0]):
                 if self.QueryType == "ConnectionRoadParcel" or self.QueryType == "RoadExtent":
                     QueryResult = BdyQueries.main(self.LandXML_Obj, point,
@@ -219,10 +242,21 @@ class TraverseStart:
                     QueryResult = BdyQueries.main(self.LandXML_Obj, point,
                                                   self.gui, self.QueryType, False)
 
-                if QueryResult:
+                if QueryResult.__class__.__name__ == "str":
+                    RemovePntList.append(point)
+                elif QueryResult:
+                    #remove points with no connections
+                    if len(RemovePntList) > 0:
+                        self.RemovePointsWithNoConnections(RemovePntList)
                     return point
+
+        if len(RemovePntList) > 0:
+            self.RemovePointsWithNoConnections(RemovePntList)
 
         return False
 
-
+    def RemovePointsWithNoConnections(self, RemovePntList):
+        
+        for Pnt in RemovePntList:
+            self.gui.CadastralPlan.Points.PointList.remove(Pnt)
             

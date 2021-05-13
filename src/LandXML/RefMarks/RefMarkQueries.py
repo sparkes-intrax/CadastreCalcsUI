@@ -42,6 +42,8 @@ def GetMarkNumberMonuments(LandXML_Obj, PntRefNum):
     for monument in LandXML_Obj.Monuments.getchildren():
         if monument.get("pntRef") == PntRefNum:
             return monument.get("desc")
+    
+    return None
 
 def CheckIfRefMark(LandXML_Obj, PntRefNum):
     '''
@@ -89,4 +91,26 @@ def CheckIfConnectionMark(LandXML_Obj, PntRefNum):
             return True
 
     return False
+
+def GetPointCode(LandXML_Obj, TargetID):
+    '''
+    Gets the point code of the point to be calculated
+    Only retrieves codes for RMs
+    '''
+    # Get RM type - None if not RM
+    MarkType = FindMarkType(LandXML_Obj, TargetID)
+    if MarkType is not None:
+        Code = "RM"+MarkType
+
+        #Check if SSM or PM
+        if CheckIfRefMark(LandXML_Obj, TargetID):
+            try:
+                Code += "-" + GetMarkNumber(LandXML_Obj, TargetID)
+            except TypeError:
+                if GetMarkNumberMonuments(LandXML_Obj, TargetID) is not None:
+                    Code += "-" + GetMarkNumberMonuments(LandXML_Obj, TargetID)
+    else:
+        Code = ""
+
+    return Code
             

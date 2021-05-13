@@ -3,6 +3,7 @@ Coordinates branch creation and traverse path selection
 '''
 from LandXML import Connections, TraverseSideCalcs, SharedOperations
 from LandXML.Cadastre import BdySideSelection
+import CadastreClasses as DataObjects
 from timer import Timer
 from DrawingObjects import DrawTraverse
 
@@ -21,7 +22,7 @@ class TraverseCalcs:
         '''
 
         #self.traverse = traverse
-        self.TriedConnections = []
+        self.TriedConnections = DataObjects.Lines()
         self.CadastralPlan = gui.CadastralPlan
         self.gui = gui
         self.LandXML_Obj = LandXML_Obj
@@ -66,8 +67,10 @@ class TraverseCalcs:
             #self.tObj.stop("Bdy Side Selection")
             #check if an observation was selected
             if Observation is None:
-                if len(self.TriedConnections) > 0:
+                if len(self.TriedConnections.__dict__.keys()) > 1:
                     self.AddTriedConnections()
+                elif not self.LandXML_Obj.TraverseProps.TraverseClose:
+                    return self.Branches.CurrentBranch
                 break
 
             self.Branches.CurrentBranch = ObservationObj.traverse
@@ -125,7 +128,12 @@ class TraverseCalcs:
         :return:
         '''
 
-        for Obs in self.TriedConnections:
+        for key in self.TriedConnections.__dict__.keys():
+            Obs = self.TriedConnections.__getattribute__(key)
+            if Obs.__class__.__name__ != "Line":
+                if Obs.__class__.__name__ != "Arc":
+                    continue
+            '''
             #set pntrefNum - always from start of traverse
             PntRefNum = self.Branches.CurrentBranch.ParentBranch
             # Calculate the side of the tried connection and its line oject
@@ -134,11 +142,12 @@ class TraverseCalcs:
                                                    Obs,
                                                    self.gui,
                                                    self.LandXML_Obj)
-
+            '''
             #check Observation hasn't already been added to tried Observations
-            if not hasattr(self.CadastralPlan.TriedConnections, Obs.get("name")):
-                setattr(self.CadastralPlan.TriedConnections, Obs.get("name"), SideObj.line)
+            if not hasattr(self.CadastralPlan.TriedConnections, key):
+                setattr(self.CadastralPlan.TriedConnections, key, Obs)
                 print("added tried connection")
+
 
 
 class StartPoint:

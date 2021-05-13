@@ -3,6 +3,7 @@ Functions to throw message boxes from form
 '''
 
 from PyQt5 import QtWidgets, QtCore
+from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QThreadPool, QRunnable, pyqtSlot, QObject, pyqtSignal
 
 from GUI_Objects import Fonts
@@ -262,6 +263,11 @@ def genericMessage(mes, title):
     msg.setWindowTitle(title)
     msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
     msg = messageBoxFormat(msg)
+    screenGeometry = QApplication.desktop().availableGeometry()
+    screenGeo = screenGeometry.bottomRight()
+    msgGeo = msg.frameGeometry()
+
+    msg.move(msgGeo.topRight())
     returnValue = msg.exec()
     if returnValue == QtWidgets.QMessageBox.Ok:
         msg.close()
@@ -275,6 +281,11 @@ def genericMessageYesNo(mes, title):
     msg.setStandardButtons(QtWidgets.QMessageBox.Yes |
                            QtWidgets.QMessageBox.No)
     msg = messageBoxFormat(msg)
+    screenGeometry = QApplication.desktop().availableGeometry()
+    screenGeo = screenGeometry.bottomRight()
+    msgGeo = msg.frameGeometry()
+
+    msg.move(msgGeo.topRight())
     return msg.exec()
 
 

@@ -55,6 +55,19 @@ def calcIntersectionPoint(m1, b1, m2, b2):
 
     return E, N
 
+def FlipBearing(bearing):
+    '''
+    flips bearing by 180
+    :param bearing: 
+    :return: 
+    '''
+    
+    bearing += 180
+    if bearing >= 360:
+        bearing -= 360
+        
+    return round(bearing,4)
+
 def calcBearing(startE, startN, endE, endN):
     '''
     calculates bearing of a line from 2 points
@@ -236,6 +249,15 @@ def bearing2_dec(bearing):
     bearing_dec = float(degrees) + float(minutes)/60 + float(seconds)/3600
 
     return bearing_dec
+
+def CalcChordLength(radius, arcLength):
+    '''
+    LandXML provides the arc length for an arc connection
+    This functions calculated the chord length from the arc length and radius
+    :param arcLength: length of arc segeent
+    :return: chord length - distance
+    '''
+    return 2 * float(radius) * sin(float(arcLength) / (2 * float(radius)))
 
 class ArcCentreCoords:
 

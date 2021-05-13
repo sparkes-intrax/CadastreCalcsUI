@@ -8,7 +8,7 @@ Coordinates the processing of landXML files
 
 from PyQt5.QtWidgets import QFileDialog
 
-from LandXML import LandXML_Traverse_Props, LandXML_IO
+from LandXML import LandXML_Traverse_Props, LandXML_IO, ConnectionMopper
 from LandXML.RefMarks import RefMark_Traverse
 from LandXML.Cadastre import CadastreTraverse
 
@@ -37,6 +37,8 @@ def LandXML(gui):
         else:
             CadastreTraverse.CadastreTraverses(gui, LandXML_Obj)
             print("NO RMs")
+            
+        ConnectionMop = ConnectionMopper.main(gui.CadastralPlan, LandXML_Obj)
 
 def ClearTriedConnections(gui):
     '''

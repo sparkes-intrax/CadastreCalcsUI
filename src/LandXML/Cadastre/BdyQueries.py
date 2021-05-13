@@ -1,7 +1,7 @@
 '''
 Set of functions and methods to query a boundary point
 '''
-from LandXML import Connections, RemoveCalculatedConnections, BDY_Connections
+from LandXML import Connections, RemoveCalculatedConnections, BDY_Connections, RemoveDeadEnds
 import CadastreClasses as DataObjects
 from LandXML.Easements import RemoveEasements
 from timer import Timer
@@ -14,8 +14,9 @@ def main(LandXML_Obj, PntRefNum, gui, Query, RM_Connection):
     :param Query: 
     :return: 
     '''
-    if PntRefNum == "6246":
-        print("Stop")
+    #if PntRefNum == "65":
+    #    print("Stop")
+        
     # Get connections from PntRefNum
     Observations = Connections.AllConnections(PntRefNum, LandXML_Obj)
     # Remove already calculated connections
@@ -33,8 +34,8 @@ def main(LandXML_Obj, PntRefNum, gui, Query, RM_Connection):
                                                               LandXML_Obj)
     Observations = RemoveEasObj.SearchObservations()
     if len(Observations.__dict__.keys()) == 0:
-        gui.CadastralPlan.Points.PointList.remove(PntRefNum)
-        return False
+        #gui.CadastralPlan.Points.PointList.remove(PntRefNum)
+        return PntRefNum
     
     # Loop through available observations
     #tObj = Timer()
@@ -64,7 +65,7 @@ def main(LandXML_Obj, PntRefNum, gui, Query, RM_Connection):
             TargetObservations = RemoveParentObservation(TargetObservations, TargetID, PntRefNum,
                                                          LandXML_Obj)
             #run Query
-            RunQueryObj = RunQuery(TargetObservations, LandXML_Obj, Query, TargetID)#, RM_Connection)
+            RunQueryObj = RunQuery(TargetObservations, LandXML_Obj, Query, TargetID, gui.CadastralPlan)#, RM_Connection)
 
             if RunQueryObj.CoordinateQuery():
                 return True
@@ -72,7 +73,7 @@ def main(LandXML_Obj, PntRefNum, gui, Query, RM_Connection):
     else:
         #tests connections to PntRefNum
         #tObj.start()
-        RunQueryObj = RunQuery(Observations, LandXML_Obj, Query, PntRefNum)#, RM_Connection)
+        RunQueryObj = RunQuery(Observations, LandXML_Obj, Query, PntRefNum, gui.CadastralPlan)#, RM_Connection)
         if RunQueryObj.CoordinateQuery():
             return True
 
@@ -101,11 +102,12 @@ def RemoveParentObservation(Observations, TargetID, PntRefNum, LandXML_Obj):
             return Observations
 
 class RunQuery:
-    def __init__(self, Observations, LandXML_Obj, Query, PntRefNum):#, RmConnection):
+    def __init__(self, Observations, LandXML_Obj, Query, PntRefNum, CadastralPlan):#, RmConnection):
         self.Observations = Observations
         self.LandXML_Obj = LandXML_Obj
         self.Query = Query
         self.PntRefNum = PntRefNum
+        self.CadastralPlan = CadastralPlan
         #self.RmConnection = RmConnection
 
     def CoordinateQuery(self):
@@ -130,6 +132,11 @@ class RunQuery:
             elif self.Query == "RmAndBdy" or self.Query == "KnownPointAndBdy":
                 if self.BdyObservations(Observation):
                     return True
+                
+            elif self.Query == "Any":
+                if self.AnyObservations(Observation):
+                    return True
+                
 
 
         return False
@@ -198,6 +205,22 @@ class RunQuery:
                 Observation.get("desc") == "Boundary":
             return True
         
+        return False
+    
+    def AnyObservations(self, Observation):
+        '''
+        Allows any observation unless a dead end
+        :param Observation: 
+        :return: 
+        '''
+        
+        TargetID = Connections.GetTargetID(Observation, self.PntRefNum, self.LandXML_Obj.TraverseProps)
+        if hasattr(self.CadastralPlan.Points, TargetID):
+            return False
+
+        TargObs = Connections.AllConnections(TargetID, self.LandXML_Obj)
+        if len(TargObs.__dict__.keys()) > 1:
+            return True
         return False
 
     def CheckParcelLines(self, parcel, TargetID):
