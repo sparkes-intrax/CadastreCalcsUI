@@ -80,3 +80,13 @@ class Points:
                     return True
 
         return False
+    
+
+    def StartPointObj(self, PntRefNum):
+        point = self.Points.__getattribute__(PntRefNum)
+        self.PntRefNum = PntRefNum
+        self.Code = point.Code
+        self.Easting = point.E
+        self.Northing = point.N
+        self.NorthingScreen = point.NorthingScreen
+        self.Layer = point.Layer

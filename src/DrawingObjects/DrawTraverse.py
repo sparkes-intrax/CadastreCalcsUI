@@ -266,7 +266,10 @@ class DataCommit:
         :return:
         '''
         for Observation in self.traverse.Observations:
-            Observation.getparent().remove(Observation)
+            try:
+                Observation.getparent().remove(Observation)
+            except AttributeError:
+                pass
 
 
     def GetPointNumber(self):

@@ -52,15 +52,19 @@ def main(LandXML_Obj, gui):
         traverseObj = RM_TraverseCalcs.Traverse(traverse, gui, LandXML_Obj, StartPoint.PntRefNum)
 
 
-
+        #Handle branches that don't close when looking for closes (add to tried connections)
+        if not traverseObj.Branches.CurrentBranch.Closed and LandXML_Obj.TraverseProps.TraverseClose:
+            StartObs = traverseObj.Branches.CurrentBranch.StartObs
+            setattr(gui.CadastralPlan.TriedConnections, StartObs,
+                    traverseObj.Branches.CurrentBranch.Lines.__getattribute__(StartObs))
         #add traverse to Cadastral Plan
-        if len(traverseObj.Branches.CurrentBranch.refPnts) > 1 and traverseObj.Branches is not None:
+        elif len(traverseObj.Branches.CurrentBranch.refPnts) > 1 and traverseObj.Branches is not None:
             DrawTraverse.main(gui, traverseObj.Branches.CurrentBranch, LandXML_Obj)
 
-        #Apply close adjustment if required
-        gui = SharedOperations.ApplyCloseAdjustment(traverseObj.Branches.CurrentBranch,
-                                                         LandXML_Obj,
-                                                         gui)
+            #Apply close adjustment if required
+            gui = SharedOperations.ApplyCloseAdjustment(traverseObj.Branches.CurrentBranch,
+                                                             LandXML_Obj,
+                                                             gui)
         
         if CheckRMsNotCalculated(gui, LandXML_Obj.Monuments, LandXML_Obj):
             break

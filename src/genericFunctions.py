@@ -7,6 +7,7 @@ Generic Functions Used throughout program
 '''
 
 import numpy as np
+from numpy import sin, cos, radians
 
 def calcLineEquation(E1, E2, N1, N2):
     '''

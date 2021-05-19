@@ -48,8 +48,8 @@ class Traverse:
         #set branch name for referencing parent branches
         #setattr(self.CurrentTraverse, "BranchName", self.PntRefNum)
         #add reference to the first branch calculated
-        if self.PntRefNum == "9":
-            print("here")
+        #if self.PntRefNum == "9":
+        #   print("here")
         # find all connections for self.PntRefNum and remove any non-RM connections
         Observations = Connections.AllConnections(self.PntRefNum, self.LandXML_Obj)
         # loop to add sides to a traverse

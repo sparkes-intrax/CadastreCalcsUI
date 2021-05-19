@@ -37,7 +37,8 @@ class AddPointToScene:
         self.point, self.PointObj = self.AddPointObject(view, point, E, N)
 
         #add point number label to scene
-        self.AddPointNumLabel(E, N, view)
+        if Layer != "EASEMENT":
+            self.AddPointNumLabel(E, N, view)
 
         #Add code label if itbeen entered
         if self.point.Code != "":
@@ -54,7 +55,7 @@ class AddPointToScene:
         '''
 
         #add point to scene
-        PointObj = view.Point(E, N, 600, self.Pen, self.Brush)
+        PointObj = view.Point(E, N, 200, self.Pen, self.Brush)
         #   PointObj.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
         #Get point scene bounding rect
@@ -348,7 +349,7 @@ class LinePointProperties:
 
 
         Pen = QPen(Colour)
-        Pen.setWidth(450)
+        Pen.setWidth(200)
         if Layer == "EASEMENT":
             Pen.setStyle(Qt.DashLine)
 

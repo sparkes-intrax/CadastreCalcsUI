@@ -326,18 +326,20 @@ class TraverseSide:
         Determines the type of point
         :return:
         '''
-
+        
+        if self.traverse.type == "EASEMENT":
+            return "EASEMENT"
 
         desc = self.Connection.get("desc")
         if self.CheckIfBoundary():
             return "BOUNDARY"
-        elif RefMarkQueries.CheckIfMonument(self.LandXML_Obj, self.TargPntRefNum.split("_")[0]):
+        elif RefMarkQueries.CheckIfMonument(self.LandXML_Obj, self.TargPntRefNum.split("_")[0]) or \
+            desc == "Reference":
             return "REFERENCE MARKS"
         elif desc == "Connection" or desc == "Road Extent" or desc == "IrregularLine" or \
                 desc == "Road":
             return "BOUNDARY"
-        else:
-            return "EASEMENT"
+
 
 
     def CheckIfBoundary(self):

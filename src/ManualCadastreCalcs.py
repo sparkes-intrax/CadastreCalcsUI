@@ -1148,6 +1148,10 @@ class Window(QMainWindow):
         PointsJoin = True
 
     def ProcessLandXML(self):
+        #self.view.scene.clear()
+        self.view = GraphicsView.GuiDrawing(self)
+        self.groupBox_Drawing.Layout.addWidget(self.view, 1, 1, 1, 1)
+        self.CadastralPlan = dataObjects.CadastralPlan()
         self.LandXML = LandXML.LandXML(self)
 
 def SetLinePen(line, colour, linewidth):

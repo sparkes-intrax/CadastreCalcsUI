@@ -109,3 +109,23 @@ class ArcChordSegs:
 
         return bearing
 
+class ArcClass:
+
+    def __init__(self, rotation):
+        self.rotation = rotation
+
+    def SetArcRotation(self, reverse):
+        '''
+        Reverses rotation of arc when src point is target in alndXML Observation
+        :return:
+        '''
+
+        if self.rotation == "ccw" and reverse:
+            return "CW"
+        elif self.rotation == "cw" and reverse:
+            return "CCW"
+        elif self.rotation == "ccw":
+            return "CCW"
+        else:
+            return "CW"
+

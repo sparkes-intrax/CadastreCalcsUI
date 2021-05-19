@@ -33,22 +33,36 @@ def ApplyCloseAdjustment(traverse, LandXML_Obj, gui):
             close_error = (close/traverse.Distance) * 1e6
         else:
             close_error = 0
-        message = "Easting Misclose: " + str(round(1000 * E_Error, 1)) + "mm\n" \
-                  "Northing Misclose: " + str(round(1000 * N_Error, 1)) + "mm\n" \
-                  "Total Misclose: " + str(round(1000 * close, 1)) + "mm\n" \
+        message = "Traverse Type: " + traverse.type + "\n"\
+                    "Easting Misclose: " + str(round(1000 * E_Error, 1)) + "mm\n" \
+                    "Northing Misclose: " + str(round(1000 * N_Error, 1)) + "mm\n" \
+                    "Total Misclose: " + str(round(1000 * close, 1)) + "mm\n" \
                     "Close Error: " + str(round(close_error,0)) + " ppm\n"
         title = "TRAVERSE MISCLOSE"
         #print("Traverse #: " + str(gui.CadastralPlan.Traverses.TraverseCounter))
         #print("Misclose: " + str(round(1000 * close, 1)) + "mm")
         #print("")
 
-        if close_error > 500:
+        if close_error > 500 and traverse.type != "EASEMENT":
+            MessageBoxes.genericMessage(message, title)
+        elif close_error > 5 and traverse.type == "EASEMENT":
             MessageBoxes.genericMessage(message, title)
         if LandXML_Obj.TraverseProps.ApplyCloseAdjustment and close_error < 500:
             TraverseClose.TraverseAdjustment(traverse, gui.CadastralPlan,
                                          E_Error, N_Error)
     
     return gui
+
+class TraverseStartPoint:
+    def __init__(self, PntRefNum, CadastralPlan):
+
+        point = CadastralPlan.Points.__getattribute__(PntRefNum)
+        self.PntRefNum = PntRefNum
+        self.Easting = point.E
+        self.Northing = point.N
+        self.NorthingScreen = point.NorthingScreen
+        self.Layer = point.Layer
+        self.Code = point.Code
 
 class DummyStartPoint:
     def __init__(self, PntRefNum):
