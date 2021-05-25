@@ -30,7 +30,7 @@ def LandXML(gui):
     TraverseProps = LandXML_Traverse_Props.TraverseProps()
     
     #LandXML dialog and file load
-    LandXML_Obj = LandXML_IO.main(TraverseProps)
+    LandXML_Obj = LandXML_IO.main(TraverseProps, gui)
 
     if LandXML_Obj is not None:
         #if RMs exists and are part of a traverse

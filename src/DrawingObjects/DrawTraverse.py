@@ -8,7 +8,7 @@ import genericFunctions as funcs
 from LandXML import Connections, RemoveCalculatedConnections, SharedOperations
 from LandXML.Easements import RemoveEasements
 
-def main(gui, traverse, LandXML_Obj):
+def main(gui, traverse, LandXML_Obj, LineColour):
     '''
     Coordinates workflow to draw traverse on drawing canvas
     Calculates close
@@ -29,7 +29,7 @@ def main(gui, traverse, LandXML_Obj):
     #DataCommitObject.AddPointsToList()
 
     #get instance of DarwTraverse
-    DrawObject = DrawTraverse(gui, traverse)
+    DrawObject = DrawTraverse(gui, traverse, LineColour)
     DrawObject.DrawPoints()
     DrawObject.DrawLines()
 
@@ -51,13 +51,14 @@ def SingelConnection(gui, traverse):
     DrawObject = DrawTraverse(gui, traverse)
     
 class DrawTraverse:
-    def __init__(self, gui, traverse):
+    def __init__(self, gui, traverse, LineColour):
         '''
         :param gui: drawing cnavas instance
         :param traverse: traverse object
         '''
         self.gui = gui
         self.traverse = traverse
+        self.SetLineColour = LineColour
         
 
     def DrawPoints(self):
@@ -127,6 +128,9 @@ class DrawTraverse:
         self.LinePen, self.LineLayer, \
         self.LineColour = LineProps.SetLineProperties(self.SrcPoint.Layer,
                                                       self.EndPoint.Layer)
+        if self.SetLineColour is not None:
+            self.LinePen.setColor(self.SetLineColour)
+            self.LinePen.setWidth(1000)
         
     def DrawLine(self):
         '''
@@ -230,7 +234,8 @@ class DataCommit:
             point = self.traverse.Points.__getattribute__(key)
             if not point.__class__.__name__ == "Point":
                 continue
-            setattr(self.CadastralPlan.Points, key, point)
+            if not hasattr(self.CadastralPlan.Points, key):
+                setattr(self.CadastralPlan.Points, key, point)
             if point.PntNum not in self.CadastralPlan.Points.PointList:
                 self.CadastralPlan.Points.PointList.append(point.PntNum)
 
@@ -282,7 +287,8 @@ class DataCommit:
         '''
 
         PntNum = self.traverse.refPnts[-1]
-        if hasattr(self.CadastralPlan.Points, PntNum):
+        if hasattr(self.CadastralPlan.Points, PntNum) and \
+                not self.LandXML_Obj.TraverseProps.ApplyCloseAdjustment:
             counter = 0
             for key in self.CadastralPlan.Points.__dict__.keys():
                 if key == self.traverse.refPnts[-1]:

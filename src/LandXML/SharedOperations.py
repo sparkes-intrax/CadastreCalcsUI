@@ -5,6 +5,11 @@ Set of common functions used by all traverse type calculated from LandXMl
 import CadastreClasses as DataObjects
 from TraverseOperations import TraverseOperations, TraverseClose
 import MessageBoxes
+from LandXML import TraverseErrorWindow
+from DrawingObjects import DrawTraverse
+from PyQt5.QtCore import Qt
+
+
 
 def initialiseTraverse(StartPoint, Layer, FirstTraverse):
     '''
@@ -26,9 +31,10 @@ def ApplyCloseAdjustment(traverse, LandXML_Obj, gui):
     '''
     Checks if a close adjustment is required and automatically applies
     '''
-
+    traverse = CalculateTraverseDistances(traverse)
     if LandXML_Obj.TraverseProps.TraverseClose:
         N_Error, E_Error, close = TraverseClose.misclose(traverse, gui.CadastralPlan)
+        traverse.Close_PreAdjust = round(close*1000,4)
         if traverse.Distance != 0:
             close_error = (close/traverse.Distance) * 1e6
         else:
@@ -43,15 +49,77 @@ def ApplyCloseAdjustment(traverse, LandXML_Obj, gui):
         #print("Misclose: " + str(round(1000 * close, 1)) + "mm")
         #print("")
 
-        if close_error > 500 and traverse.type != "EASEMENT":
+        if close_error >1e10 and traverse.type != "EASEMENT":
             MessageBoxes.genericMessage(message, title)
         elif close_error > 5 and traverse.type == "EASEMENT":
             MessageBoxes.genericMessage(message, title)
-        if LandXML_Obj.TraverseProps.ApplyCloseAdjustment and close_error < 500:
+
+        if close > 1:
+            DrawCurrentTraverse(gui, traverse)
+            Dialog = TraverseErrorWindow.TraverseErrorWin(gui, traverse, LandXML_Obj)
+            Dialog.exec_()
+            if Dialog.Changed:
+                N_Error = Dialog.N_Error
+                E_Error = Dialog.E_Error
+                traverse = CalculateTraverseDistances(traverse)
+                close = Dialog.close
+                close_error = (close/traverse.Distance) * 1e6
+
+                RemoveDrawnTraverse(gui, traverse)
+            else:
+                return gui
+                
+
+        if LandXML_Obj.TraverseProps.ApplyCloseAdjustment and close_error < 1000:
             TraverseClose.TraverseAdjustment(traverse, gui.CadastralPlan,
                                          E_Error, N_Error)
+            traverse = CleanUpTraverseEnd(traverse)
+        elif close_error < 1:
+            traverse = CleanUpTraverseEnd(traverse)
+        else:
+            DrawCurrentTraverse(gui, traverse)
     
     return gui
+
+def DrawCurrentTraverse(gui, traverse):
+    DrawObj = DrawTraverse.DrawTraverse(gui, traverse, Qt.red)
+    DrawObj.DrawLines()
+
+def RemoveDrawnTraverse(gui, traverse):
+
+    for key in traverse.Lines.__dict__.keys():
+        if key == "LineNum":
+            continue
+        Line = traverse.Lines.__getattribute__(key)
+        gui.view.scene.removeItem(Line.GraphicsItems.Line)
+        try:
+            gui.view.scene.removeItem(Line.GraphicsItems.LineLabel)
+        except AttributeError:
+            pass
+
+
+def CleanUpTraverseEnd(traverse):
+    '''
+    After an adjustment. Cleans up traverse end.
+    Sets end of last connection to traverse end (ie not PntNum_1)
+    :param traverse:
+    :return:
+    '''
+
+    if len(traverse.EndRefPnt.split("_")) > 1:
+        #Get last connection of traverse
+        ObsName = traverse.Observations[-1].get("name")
+        traverse.refPnts.remove(traverse.EndRefPnt)
+        #get corresponding line
+        line = traverse.Lines.__getattribute__(ObsName)
+        #Change its end reference point
+        line.EndRef = traverse.EndRefPnt.split("_")[0]
+        #delete duplicate end point
+        delattr(traverse.Points, traverse.EndRefPnt)
+        #Change end point ref of traverse
+        traverse.EndRefPnt = traverse.EndRefPnt.split("_")[0]
+
+    return traverse
 
 class TraverseStartPoint:
     def __init__(self, PntRefNum, CadastralPlan):
@@ -90,7 +158,7 @@ def CalculateTraverseDistances(traverse):
         if line.__class__.__name__ != "Line":
             continue
 
-        distance += line.__getattribute__("Distance")
+        distance += float(line.__getattribute__("Distance"))
         deltaE += abs(line.__getattribute__("deltaE"))
         deltaN += abs(line.__getattribute__("deltaN"))
 
@@ -100,3 +168,4 @@ def CalculateTraverseDistances(traverse):
     setattr(traverse, "deltaN", deltaN)
 
     return traverse
+

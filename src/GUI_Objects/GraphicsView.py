@@ -113,7 +113,8 @@ class GuiDrawing(QGraphicsView):
             self.scale(self.zoom, self.zoom)
             #self.centerOn(view_pos)
             self.updateView()
-            print("zoom=" + str(self.zoom))
+            #print(self.ce)
+            #print("zoom=" + str(self.zoom))
             #New scene positions
             EndPos = self.mapToScene(event.pos())
 

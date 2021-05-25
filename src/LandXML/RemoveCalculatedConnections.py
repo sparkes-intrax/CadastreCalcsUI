@@ -90,10 +90,8 @@ class RemoveConnections:
 
         # define setup and traget ID points
         if self.PntRefNum == connection.get("setupID").replace(self.TraverseProps.tag, ""):
-            SetupID = connection.get("setupID").replace(self.TraverseProps.tag, "")
             TargetSetupID = connection.get("targetSetupID").replace(self.TraverseProps.tag, "")
         else:
-            SetupID = connection.get("targetSetupID").replace(self.TraverseProps.tag, "")
             TargetSetupID = connection.get("setupID").replace(self.TraverseProps.tag, "")
         
 

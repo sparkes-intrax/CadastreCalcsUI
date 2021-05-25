@@ -57,7 +57,7 @@ def misclose(travSeries, PlanObj):
 
     else:
         #closePointRefNum = findNearestPoint(PlanObj, EastEnd, NorthEnd)
-        closePoint = PlanObj.Points.__getattribute__(travSeries.EndRefPnt)
+        closePoint = PlanObj.Points.__getattribute__(travSeries.EndRefPnt.split("_")[0])
 
     EastClose = float(closePoint.E)
     NorthClose = float(closePoint.N)
@@ -102,14 +102,15 @@ class TraverseAdjustment:
         '''
 
         #Calculate Traverse length
-        self.TraverseDistance = self.TraverseLength(Traverse)
+        self.TraverseDistance, self.EastTotal, self.NorthTotal = self.TraverseLength(Traverse)
+
 
         #Adjust traverse
         Traverse = self.AdjustTraverse(Traverse, E_Error, N_Error)
 
         #calculate New Traverse close
         N_Error, E_Error, close = misclose(Traverse, PlanObj)
-        Traverse.Close_PostAdjust = round(close, 1)
+        Traverse.Close_PostAdjust = round(close*1000, 4)
         Traverse.Distance = self.TraverseDistance
 
         self.Traverse = Traverse
@@ -122,12 +123,16 @@ class TraverseAdjustment:
         '''
 
         TotalTraverseDistance = 0
+        EastTotal = 0
+        NorthTotal = 0
         for key in Traverse.Lines.__dict__.keys():
             if key != "LineNum":
                 line = Traverse.Lines.__getattribute__(key)
                 TotalTraverseDistance += float(line.Distance)
+                EastTotal += abs(line.deltaE)
+                NorthTotal += abs(line.deltaN)
 
-        return TotalTraverseDistance
+        return TotalTraverseDistance, EastTotal, NorthTotal
 
     def AdjustTraverse(self, Traverse, E_Error, N_Error):
         '''
@@ -140,11 +145,11 @@ class TraverseAdjustment:
         CumNorthError = 0
         CumEastError = 0
         for key in Traverse.Lines.__dict__.keys():
+            line = Traverse.Lines.__getattribute__(key)
             if key == "LineNum":
                 continue
 
             #retrieve line and point object for traverse line segment
-            line = Traverse.Lines.__getattribute__(key)
             deltaE = line.__getattribute__("deltaE")
             deltaN = line.__getattribute__("deltaN")
             pointS = Traverse.Points.__getattribute__(line.StartRef)
@@ -152,7 +157,7 @@ class TraverseAdjustment:
 
             #calculate error to be added to cumulative error for this traverse line
             LineEastingCorrection, LineNorthingCorrection = \
-                self.LineSegmentCorrection(float(line.Distance), N_Error, E_Error)
+                self.LineSegmentCorrection(deltaE, deltaN, N_Error, E_Error)
 
             CumNorthError += LineNorthingCorrection
             CumEastError += LineEastingCorrection
@@ -170,7 +175,7 @@ class TraverseAdjustment:
 
         return Traverse
 
-    def LineSegmentCorrection(self, distance, N_Error, E_Error):
+    def LineSegmentCorrection(self, deltaE, deltaN, N_Error, E_Error):
         '''
         Calculates the error for the queried traverse side
         :param distance:
@@ -179,8 +184,8 @@ class TraverseAdjustment:
         :return:
         '''
 
-        LineNorthingCorrection = (distance/self.TraverseDistance) * N_Error
-        LineEastingCorrection = (distance / self.TraverseDistance) * E_Error
+        LineNorthingCorrection = (abs(deltaN)/self.NorthTotal) * N_Error
+        LineEastingCorrection = (abs(deltaE) / self.EastTotal) * E_Error
         return LineEastingCorrection, LineNorthingCorrection
 
     def ApplyCorrection(self, Error, SideLength):
@@ -219,6 +224,11 @@ class TraverseAdjustment:
         lineBearing = funcs.calcBearing(pointS.E, pointS.N, pointE.E, pointE.N)
         lineBearing = funcs.bearing2_DMS(lineBearing)
         setattr(line, "Bearing", lineBearing)
+
+        if line.__class__.__name__ == "Arc":
+            CentreCoords = funcs.ArcCentreCoords(pointS, pointE,
+                                                 line.Radius, line.Rotation)
+            setattr(line, "CentreCoords", CentreCoords)
 
         return Traverse
 '''

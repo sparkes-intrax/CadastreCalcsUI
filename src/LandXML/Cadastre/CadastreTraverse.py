@@ -66,11 +66,12 @@ class CadastreTraverses:
             #add traverse to CadastralPlan
             try:
                 if len(traversePath.refPnts) >= 2:
-                    DrawTraverse.main(self.gui, traversePath, self.LandXML_Obj)
+                    
                     if len(traversePath.refPnts) > 2 and self.LandXML_Obj.TraverseProps.TraverseClose:
                         self.gui = SharedOperations.ApplyCloseAdjustment(traversePath,
                                                                      self.LandXML_Obj,
                                                                      self.gui)
+                    DrawTraverse.main(self.gui, traversePath, self.LandXML_Obj, None)
                     
             except AttributeError as err:
                 pass
@@ -100,7 +101,7 @@ class CadastreTraverses:
                     #MopObj = ConnectionMopper.ObservationMop(self.gui.CadastralPlan, self.LandXML_Obj)
                     break
             else:
-                if StartPoint.PntRefNum == "6":
+                if StartPoint.PntRefNum == "65":
                     print("hereh")
                 tObjStarts.stop("Found Start Point: " + StartPoint.PntRefNum, 1)
             #    print("StartPoint: " + StartPoint.PntRefNum)

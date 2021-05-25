@@ -23,6 +23,8 @@ class Points:
         self.PntRefNum = PntRefNum
         #get point Code
         Code = RefMarkQueries.GetPointCode(self.LandXML_Obj, TargetID)
+        if Code == "RMDH&W":
+            Code = "RMDHW"
         #convert bearing to decimal
         bearing = funcs.bearing2_dec(bearingDMS)
         #Return angle for point calculate and its sign for Easting and Northing

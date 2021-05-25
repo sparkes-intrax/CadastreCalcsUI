@@ -106,10 +106,11 @@ class TraverseCalcs:
         if self.Branches.CurrentBranch.NextStartPnt is not None:
             # start next traverse from same spot and run normal close operations
             # add traverse to Cadadastral Plan and gui
-            DrawTraverse.main(self.gui, self.Branches.CurrentBranch, self.LandXML_Obj)
+
             self.gui = SharedOperations.ApplyCloseAdjustment(self.Branches.CurrentBranch,
                                                              self.LandXML_Obj,
                                                              self.gui)
+            DrawTraverse.main(self.gui, self.Branches.CurrentBranch, self.LandXML_Obj, None)
             #create new traverse  and set PntRefNum
             StartPointObj = StartPoint(self.gui, self.Branches.CurrentBranch.NextStartPnt)
             self.PntRefNum = StartPointObj.PntRefNum

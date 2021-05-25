@@ -41,39 +41,15 @@ def main(LandXML_Obj, PntRefNum, gui, Query, RM_Connection):
     #tObj = Timer()
     if RM_Connection:
         #tests connections to the RM connection
-
+        return TestTargetObservations(Observations, LandXML_Obj, gui, Query, PntRefNum, False)
         #tObj.start()
-        for key in Observations.__dict__.keys():
-            Observation = Observations.__getattribute__(key)
-            desc = Observation.get("desc")
 
-            if desc == "Connection" or desc == "Road Extent" or \
-                    desc == "Reference":
-                # Get TargetID for Observation
-                TargetID = Connections.GetTargetID(Observation, PntRefNum, LandXML_Obj.TraverseProps)
-            else:
-                continue
-
-            #Get Connections to TargetID
-            TargetObservations = Connections.AllConnections(TargetID, LandXML_Obj)
-            TargetObservations = RemoveCalculatedConnections.main(TargetObservations, gui.CadastralPlan,
-                                               DataObjects.Traverse(False, "RM"),
-                                               LandXML_Obj.TraverseProps,
-                                               TargetID)
-
-            #remove observation to TargetID
-            TargetObservations = RemoveParentObservation(TargetObservations, TargetID, PntRefNum,
-                                                         LandXML_Obj)
-            #run Query
-            RunQueryObj = RunQuery(TargetObservations, LandXML_Obj, Query, TargetID, gui.CadastralPlan)#, RM_Connection)
-
-            if RunQueryObj.CoordinateQuery():
-                return True
         #tObj.stop("RM searches")
     else:
         #tests connections to PntRefNum
         #tObj.start()
-        RunQueryObj = RunQuery(Observations, LandXML_Obj, Query, PntRefNum, gui.CadastralPlan)#, RM_Connection)
+        RunQueryObj = RunQuery(Observations, LandXML_Obj, Query, PntRefNum, gui.CadastralPlan, 
+                               False)#, RM_Connection)
         if RunQueryObj.CoordinateQuery():
             return True
 
@@ -82,6 +58,68 @@ def main(LandXML_Obj, PntRefNum, gui, Query, RM_Connection):
 
     return False
 
+def TestTargetObservations(Observations, LandXML_Obj, gui, Query, PntRefNum, GetStart):
+    '''
+    Tests Observations from Target of Observation
+    :return:
+    '''
+    for key in Observations.__dict__.keys():
+        Observation = Observations.__getattribute__(key)
+        if GetStart:
+            #when called from external module need to assign starting point
+            PntRefNum = GetStartPoint(gui.CadastralPlan, Observation, LandXML_Obj.TraverseProps)
+
+        desc = Observation.get("desc")
+
+        if desc == "Connection" or desc == "Road Extent" or \
+                desc == "Reference":
+            # Get TargetID for Observation
+            TargetID = Connections.GetTargetID(Observation, PntRefNum, LandXML_Obj.TraverseProps)
+        else:
+            continue
+
+        # Get Connections to TargetID
+        TargetObservations = Connections.AllConnections(TargetID, LandXML_Obj)
+        TargetObservations = RemoveCalculatedConnections.main(TargetObservations, gui.CadastralPlan,
+                                                              DataObjects.Traverse(False, "RM"),
+                                                              LandXML_Obj.TraverseProps,
+                                                              TargetID)
+
+        # remove observation to TargetID
+        TargetObservations = RemoveParentObservation(TargetObservations, TargetID, PntRefNum,
+                                                     LandXML_Obj)
+        if TargetObservations is None:
+            continue
+        # run Query
+        RunQueryObj = RunQuery(TargetObservations, LandXML_Obj, Query, TargetID, gui.CadastralPlan, 
+                               GetStart)  # , RM_Connection)
+
+        if RunQueryObj.CoordinateQuery():
+            if GetStart:
+                return PntRefNum
+            else:
+                return True
+
+    return False
+
+def GetStartPoint(CadastralPlan, Observation, TraverseProps):
+    '''
+    Determines the starting point of an observation
+    based on the which end is already calculated in CadastralPlan
+    :param CadastralPlan:
+    :param Observation:
+    :return:
+    '''
+
+    setupID = Observation.get("setupID").replace(TraverseProps.tag, "")
+    targetID = Observation.get("targetSetupID").replace(TraverseProps.tag, "")
+    
+    if hasattr(CadastralPlan.Points, setupID):
+        return setupID
+    else:
+        return targetID
+    
+    
 def RemoveParentObservation(Observations, TargetID, PntRefNum, LandXML_Obj):
     '''
     Removes the parent connection between PntRefNum and TargetID from
@@ -102,12 +140,13 @@ def RemoveParentObservation(Observations, TargetID, PntRefNum, LandXML_Obj):
             return Observations
 
 class RunQuery:
-    def __init__(self, Observations, LandXML_Obj, Query, PntRefNum, CadastralPlan):#, RmConnection):
+    def __init__(self, Observations, LandXML_Obj, Query, PntRefNum, CadastralPlan, GetStart):#, RmConnection):
         self.Observations = Observations
         self.LandXML_Obj = LandXML_Obj
         self.Query = Query
         self.PntRefNum = PntRefNum
         self.CadastralPlan = CadastralPlan
+        self.GetStart = GetStart
         #self.RmConnection = RmConnection
 
     def CoordinateQuery(self):
@@ -121,6 +160,9 @@ class RunQuery:
 
         for key in self.Observations.__dict__.keys():
             Observation = self.Observations.__getattribute__(key)
+            
+            if self.GetStart:
+                self.PntRefNum = GetStartPoint(self.CadastralPlan, Observation, self.LandXML_Obj.TraverseProps)
 
             if self.Query == "RoadParcel" or self.Query == "KnownPointRoadParcel"\
                     or self.Query == "ConnectionRoadParcel" or self.Query == "RoadExtent":
@@ -215,8 +257,6 @@ class RunQuery:
         '''
         
         TargetID = Connections.GetTargetID(Observation, self.PntRefNum, self.LandXML_Obj.TraverseProps)
-        if hasattr(self.CadastralPlan.Points, TargetID):
-            return False
 
         TargObs = Connections.AllConnections(TargetID, self.LandXML_Obj)
         if len(TargObs.__dict__.keys()) > 1:

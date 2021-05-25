@@ -59,12 +59,12 @@ def main(LandXML_Obj, gui):
                     traverseObj.Branches.CurrentBranch.Lines.__getattribute__(StartObs))
         #add traverse to Cadastral Plan
         elif len(traverseObj.Branches.CurrentBranch.refPnts) > 1 and traverseObj.Branches is not None:
-            DrawTraverse.main(gui, traverseObj.Branches.CurrentBranch, LandXML_Obj)
 
             #Apply close adjustment if required
             gui = SharedOperations.ApplyCloseAdjustment(traverseObj.Branches.CurrentBranch,
                                                              LandXML_Obj,
                                                              gui)
+            DrawTraverse.main(gui, traverseObj.Branches.CurrentBranch, LandXML_Obj, None)
         
         if CheckRMsNotCalculated(gui, LandXML_Obj.Monuments, LandXML_Obj):
             break

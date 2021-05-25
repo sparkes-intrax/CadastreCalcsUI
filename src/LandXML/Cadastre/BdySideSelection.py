@@ -187,7 +187,7 @@ class SideSelection:
         QueryObj = BdyQueries.RunQuery(self.Observations,
                                        self.LandXML_Obj,
                                        Query,
-                                       self.PntRefNum, self.CadastralPlan)
+                                       self.PntRefNum, self.CadastralPlan, False)
         #List of Observations without road frontage
         RemoveObservations = []
         for key in self.Observations.__dict__.keys():

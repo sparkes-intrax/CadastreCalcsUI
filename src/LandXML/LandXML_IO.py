@@ -8,7 +8,7 @@ from LandXML import LandXML_Objects, Connections
 import MessageBoxes
 
 
-def main(TraverseProps):
+def main(TraverseProps, gui):
     '''
     Calls the QDialog to select landXML
     Loads landXML and creates data objects
@@ -25,8 +25,10 @@ def main(TraverseProps):
     #Get LandXML file from QFileDialog
     Dialog = SelectLandXMLFile()
     LandXMLFile = Dialog.file
+    setattr(gui.CadastralPlan, "LandXmlFile", LandXMLFile)
 
     if LandXMLFile is not None:
+        setattr(gui.CadastralPlan, "LandXML_Dir", Dialog.dir.path())
         #Get LandXML objects from file
         LandXML_Obj = LandXML_Objects.main(LandXMLFile, TraverseProps)
         setattr(LandXML_Obj, "TriedConnections", TriedConnections())
@@ -49,6 +51,7 @@ class SelectLandXMLFile(QFileDialog):
         dialog.selectNameFilter("XML files (*.xml)")
         if dialog.exec_():
             self.file = dialog.selectedFiles()[0]
+            self.dir = dialog.directory()
         else:
             self.file = None
             

@@ -366,6 +366,80 @@ class ArcCentreCoords:
             Ec = ChordMidPoint.E
 
         return Ec
+    
+class ArcAngles:
+    
+    def __init__(self, SrcPoint, EndPoint, CentreCoords, rotation):
+        '''
+        Calculates the start and end angles for an arc
+        Used for arc objects in DXF format
+        :param SrcPoint: 
+        :param EndPoint: 
+        '''
+        self.SrcPoint = SrcPoint
+        self.EndPoint = EndPoint
+        self.CentreCoords = CentreCoords
+        self.rotation = rotation
+        
+        #Calculate Angles
+        self.StartAngle, self.EndAngle = self.CalcAngles()
+    
+    def CalcAngles(self):
+        '''
+        Calculates the angles for the arc
+        :return: 
+        '''
+
+        # start Angle
+        BaseAngle = self.Quadrant(self.SrcPoint, self.CentreCoords)
+        deltaE = abs(self.SrcPoint.E - self.CentreCoords.CentreEasting)
+        deltaN = abs(self.SrcPoint.N - self.CentreCoords.CentreNorthing)
+        StartAngle = self.arcTan(deltaE, deltaN, BaseAngle) + BaseAngle
+        #StartN = np.array(self.SrcPoint.N) - np.array(self.CentreCoords.CentreNorthing)
+        #StartE = np.array(self.SrcPoint.E) - np.array(self.CentreCoords.CentreEasting)
+        #StartAngle = np.degrees(np.arctan2(StartN, StartE))
+        # end Angle
+        BaseAngle = self.Quadrant(self.EndPoint, self.CentreCoords)
+        deltaE = abs(self.EndPoint.E - self.CentreCoords.CentreEasting)
+        deltaN = abs(self.EndPoint.N - self.CentreCoords.CentreNorthing)
+        EndAngle = self.arcTan(deltaE, deltaN, BaseAngle) + BaseAngle
+        #EndN = np.array(self.EndPoint.N) - np.array(self.CentreCoords.CentreNorthing)
+        #EndE = np.array(self.EndPoint.E) - np.array(self.CentreCoords.CentreEasting)
+        #EndAngle = np.degrees(np.arctan2(EndN, EndE))
+        
+        if self.rotation == "CW":
+            return EndAngle, StartAngle
+        else:
+            return StartAngle, EndAngle
+
+    def Quadrant(self, Point, Centre):
+
+        if Point.E > Centre.CentreEasting and Point.N > Centre.CentreNorthing:
+            BaseAngle = 0
+        elif Point.E < Centre.CentreEasting and Point.N > Centre.CentreNorthing:
+            BaseAngle = 90
+        elif Point.E < Centre.CentreEasting and Point.N < Centre.CentreNorthing:
+            BaseAngle = 180
+        elif Point.E > Centre.CentreEasting and Point.N < Centre.CentreNorthing:
+            BaseAngle = 270
+        elif Point.E > Centre.CentreEasting and Point.N == Centre.CentreNorthing:
+            BaseAngle = 0
+        elif Point.E == Centre.CentreEasting and Point.N > Centre.CentreNorthing:
+            BaseAngle = 90
+        elif Point.E < Centre.CentreEasting and Point.N == Centre.CentreNorthing:
+            BaseAngle = 180
+        elif Point.E == Centre.CentreEasting and Point.N < Centre.CentreNorthing:
+            BaseAngle = 270
+
+        return BaseAngle
+
+    def arcTan(self, deltaE, deltaN, baseAngle):
+
+        if baseAngle == 0 or baseAngle == 180:
+            return np.degrees(np.arctan(deltaN / deltaE))
+        else:
+            return np.degrees(np.arctan(deltaE / deltaN))
+        
 
 
 class LineMidPoint:

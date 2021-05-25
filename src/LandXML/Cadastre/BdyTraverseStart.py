@@ -2,7 +2,7 @@
 Determines starting points for traverses
 '''
 
-from LandXML.Cadastre import BdyQueries
+from LandXML.Cadastre import BdyQueries, ConnectionObservations
 from LandXML.RefMarks import RefMarkQueries
 from LandXML import BDY_Connections, Coordinates
 
@@ -108,8 +108,8 @@ class TraverseStart:
         # Test connection observation connected to road frontage
         #tObj = Timer()
         #tObj.start()
-        PntRefNum = self.CalculatedPoint()
-        #tObj.stop("Road Parcel Connection search")
+        PntRefNum = self.ConnectionPoints("Connection")
+        #tObj.stop("Road Parcel Connection search", 1)
         if PntRefNum is False:
             self.QueryType = "RoadExtent"
         else:
@@ -143,17 +143,21 @@ class TraverseStart:
         #tObj = Timer()
         #tObj.start()
         PntRefNum = self.CalculatedPoint()
-        #tObj.stop("Calculated Point road parcel connection")
+        #PntRefNum = self.ConnectionPoints("Road")
+
+        #tObj.stop("Calculated Point road parcel connection",1)
+        '''
         if PntRefNum is False:
             self.QueryType = "KnownPointRoad"
         else:
             self.TraverseProps.RmBdyTraverseStart = False
             return PntRefNum
-
+        
         # Test if already calculated points have road frontage
         #tObj = Timer()
         #tObj.start()
         PntRefNum = self.CalculatedPoint()
+        '''
         #tObj.stop("Calculated Point onto any road parcel - not a Lot")
         if PntRefNum is False:
             self.QueryType = "RmAndBdy"
@@ -165,6 +169,7 @@ class TraverseStart:
         #tObj = Timer()
         #tObj.start()
         PntRefNum = self.CalculatedRM()
+        '''
         #tObj.stop("RM connection to Boundary")
         if PntRefNum is False:
             self.QueryType = "KnownPointAndBdy"
@@ -177,7 +182,7 @@ class TraverseStart:
         PntRefNum = self.CalculatedPoint()
         #tObj.stop("Calculated Point connection to a boundary vertex")
         
-        
+        '''
         if PntRefNum is False:
             self.QueryType = "Any"
         else:
@@ -222,6 +227,33 @@ class TraverseStart:
             self.RemovePointsWithNoConnections(RemovePntList)
 
         return False
+    
+    def ConnectionPoints(self, Query):
+        '''
+        Checks connections specified as road Extent or Connection
+        :return: 
+        '''
+        #get connections
+        Observations = ConnectionObservations.main(self.gui.CadastralPlan, self.LandXML_Obj,
+                                                   Query)
+        '''
+        if Query == "Road":
+            QueryObj = BdyQueries.RunQuery(Observations, self.LandXML_Obj, self.QueryType,
+                                           False, self.gui.CadastralPlan,True)
+            ObsFound = QueryObj.CoordinateQuery()
+            if ObsFound:
+                PntRefNum = QueryObj.PntRefNum
+            else:
+                PntRefNum = False
+        else:
+        '''
+        PntRefNum = BdyQueries.TestTargetObservations(Observations, self.LandXML_Obj, self.gui,
+                                                 self.QueryType, None, True)
+
+        return PntRefNum
+
+        
+        
 
     def CalculatedPoint(self):
         '''

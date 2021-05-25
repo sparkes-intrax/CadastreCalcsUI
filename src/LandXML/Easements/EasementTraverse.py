@@ -49,7 +49,7 @@ class Traverse:
                                                                  self.LandXML_Obj,
                                                                  self.gui)
                 #draw and commit traverse.
-                DrawTraverse.main(self.gui, self.traverse, self.LandXML_Obj)
+                DrawTraverse.main(self.gui, self.traverse, self.LandXML_Obj, None)
 
 
 

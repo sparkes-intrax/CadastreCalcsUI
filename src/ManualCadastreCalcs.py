@@ -15,6 +15,7 @@ from PyQt5.QtCore import Qt, QThreadPool
 import genericFunctions as funcs
 import numpy as np
 import CadastreClasses as dataObjects
+from FileIO import Writer
 from TraverseOperations import TraverseClose, CreateTraverseObject
 import drawObjects
 
@@ -88,6 +89,9 @@ class Window(QMainWindow):
         '''
         Adds a menu bar to GUI
         '''
+        #export dxf/csv action
+        ExportDxfCsv = QtWidgets.QAction("Export to DXF and CSV", self)
+        ExportDxfCsv.triggered.connect(self.CallWriter)
         #get style sheet
         Font = Fonts.MenuBarFont()
         style = ObjectStyleSheets.QMenuBar()
@@ -95,9 +99,10 @@ class Window(QMainWindow):
         self.bar.setStyleSheet(style)
         fileMenu = QtWidgets.QMenu("&File", self)
         fileMenu.setStyleSheet(style)
+        fileMenu.addAction(ExportDxfCsv)
         self.bar.addMenu(fileMenu)
-        fileMenu.addAction("Export to LandXML")
-        fileMenu.addAction("Export CSV with RM Levels")
+        #fileMenu.addAction("Export to LandXML")
+        #fileMenu.addAction("Export to DXF and CSV")
         ViewMenu = QtWidgets.QMenu("&View", self)
         ViewMenu.setStyleSheet(style)
 
@@ -1153,6 +1158,10 @@ class Window(QMainWindow):
         self.groupBox_Drawing.Layout.addWidget(self.view, 1, 1, 1, 1)
         self.CadastralPlan = dataObjects.CadastralPlan()
         self.LandXML = LandXML.LandXML(self)
+
+    def CallWriter(self):
+        Writer.main(self.CadastralPlan)
+        
 
 def SetLinePen(line, colour, linewidth):
     '''

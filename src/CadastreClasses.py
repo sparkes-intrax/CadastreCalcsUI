@@ -91,7 +91,8 @@ class Arcs:
 
 class Arc():
     def __init__(self, StartRef, EndRef, Layer, radius, centreCoords,
-                 rotation, distance, bearing, deltaE, deltaN, Colour):
+                 rotation, distance, bearing, deltaE, deltaN, Colour,
+                 ArcAngles):
         '''
         Line object to store refpoints for start and end of line - and layer of line
         - refpoints reference Points
@@ -114,6 +115,7 @@ class Arc():
         self.Colour = Colour
         self.deltaE = deltaE  # these are adjusted during traverse adjustment and used to calc line distances
         self.deltaN = deltaN
+        self.ArcAngles = ArcAngles
 
 class Polygons(object):
     '''

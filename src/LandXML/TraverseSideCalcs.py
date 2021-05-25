@@ -133,12 +133,29 @@ class TraverseSide:
             return self.Connection.get("targetSetupID").replace(self.LandXML_Obj.TraverseProps.tag, "")
         else:
             #flip bearing
-            bearing = funcs.bearing2_dec(self.bearing) + 180
+            bearing = float(self.bearing) + 180
             if bearing >= 360:
                 bearing = bearing - 360
 
-            self.bearing  = funcs.bearing2_DMS(bearing)
+            self.bearing  = self.CheckBearingFormat(bearing)
+            
             return self.Connection.get("setupID").replace(self.LandXML_Obj.TraverseProps.tag, "")
+    def CheckBearingFormat(self, bearing):
+        '''
+        When a bearing flip is performed the bearing format can be wrong
+        :param bearing:
+        :return:
+        '''
+        bearing = str(round(bearing,4))
+        if len(bearing.split(".")) == 1:
+            return bearing
+
+        if len(bearing.split(".")[1]) == 1:
+            bearing += "0"
+        elif len(bearing.split(".")[1]) == 3:
+            bearing += "0"
+
+        return bearing
 
     def GetPointCode(self):
         '''
@@ -219,12 +236,15 @@ class TraverseSide:
         # get coordinates for centre of the arc
         CentreArcCoords = funcs.ArcCentreCoords(self.SrcPoint, self.point,
                                                self.radius, self.rotation)
+        
+        ArcAngles = funcs.ArcAngles(self.SrcPoint, self.point, CentreArcCoords, self.rotation)
 
         #create arc object
         self.line = DataObjects.Arc(self.PntRefNum, self.TargPntRefNum,
                               self.LineLayer, self.radius,
                               CentreArcCoords, self.rotation, self.distance,
-                              self.bearing, self.deltaE, self.deltaN, self.LineColour)
+                              self.bearing, self.deltaE, self.deltaN, self.LineColour,
+                                    ArcAngles)
 
         #Add arc to traverse
         #LineNum = self.traverse.Lines.LineNum + 1
