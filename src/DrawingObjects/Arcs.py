@@ -65,7 +65,7 @@ class ArcChordSegs:
         Northings = [pointS.NorthingScreen]
 
         #set bearing variable for first arc segment
-        ArcAngle = 0.5
+        ArcAngle = 0.1
         bearing = self.AddArcAngleSeg(Rotation, ArcAngle)
         while(abs(bearing - self.CentreToEndBearing) > 0.25):
 

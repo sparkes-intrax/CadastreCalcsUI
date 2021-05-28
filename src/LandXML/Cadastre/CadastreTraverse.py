@@ -54,7 +54,14 @@ class CadastreTraverses:
             traverse = SharedOperations.initialiseTraverse(StartPoint, "BOUNDARY", True)
         #3) Whats the condition for continuing to look for traverses
         MoreBdyTraverses = True
+        
+        #Set plan origin if no Points
+        if len(self.gui.CadastralPlan.Points.__dict__.keys()) == 1:
+            setattr(self.gui.CadastralPlan, "EastOrigin", StartPoint.Easting)
+            setattr(self.gui.CadastralPlan, "NorthOrigin", StartPoint.Northing)
 
+        #LIst of point not allowed to start again - for when trying tried connections
+        TriedStartPoints = []
         while(MoreBdyTraverses):
 
             #Find a traverse path (to close)
@@ -72,6 +79,10 @@ class CadastreTraverses:
                                                                      self.LandXML_Obj,
                                                                      self.gui)
                     DrawTraverse.main(self.gui, traversePath, self.LandXML_Obj, None)
+
+                elif len(traversePath.refPnts) == 1 and \
+                    not self.LandXML_Obj.TraverseProps.TraverseClose:
+                    TriedStartPoints.append(StartPoint.PntRefNum)
                     
             except AttributeError as err:
                 pass
@@ -89,7 +100,7 @@ class CadastreTraverses:
 
                 numTriedConnections = len((self.gui.CadastralPlan.TriedConnections.__dict__.keys()))
                 if numTriedConnections > 1:
-                    StartPoint = GetTriedConnections(self.gui)
+                    StartPoint = GetTriedConnections(self.gui, TriedStartPoints)
                     traverse, StartPoint = self.StartPointQuery(StartPoint)
                     if traverse is None:
                         print("Found all boundary traverse Paths")
@@ -101,7 +112,7 @@ class CadastreTraverses:
                     #MopObj = ConnectionMopper.ObservationMop(self.gui.CadastralPlan, self.LandXML_Obj)
                     break
             else:
-                if StartPoint.PntRefNum == "65":
+                if StartPoint.PntRefNum == "2":
                     print("hereh")
                 tObjStarts.stop("Found Start Point: " + StartPoint.PntRefNum, 1)
             #    print("StartPoint: " + StartPoint.PntRefNum)
@@ -155,7 +166,7 @@ class CadastreTraverses:
                                              E_Error, N_Error)
 
 class GetTriedConnections:
-    def __init__(self, gui):
+    def __init__(self, gui, TriedStartPoints):
         '''
         Gets Tried connections and returns start point
         :return:
@@ -168,6 +179,8 @@ class GetTriedConnections:
 
             #Get the start point
             PntRefNum = Obs.__getattribute__("StartRef")
+            if PntRefNum in TriedStartPoints:
+                continue
             self.GetStartPoint(PntRefNum, gui)
             break
 

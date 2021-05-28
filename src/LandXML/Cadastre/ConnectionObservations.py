@@ -39,7 +39,7 @@ class ConnectionQuery:
             Observations = ObservationObj(self.LandXML_Obj.ReducedObs)
         else:
             Observations = self.GetAllObs()
-            Observations = self.RemoveObservations(Observations)
+        Observations = self.RemoveObservations(Observations)
         Observations = self.RemoveDeadEnds(Observations)
         
         return Observations
@@ -72,14 +72,24 @@ class ConnectionQuery:
         for key in Observations.__dict__.keys():
             Ob = Observations.__getattribute__(key)
             ObsName = Ob.get("name")
-            setupID = Ob.get("setupID").replace(self.LandXML_Obj.TraverseProps.tag, "")
-            targetID = Ob.get("targetSetupID").replace(self.LandXML_Obj.TraverseProps.tag, "")
+            try:
+                setupID = Ob.get("setupID").replace(self.LandXML_Obj.TraverseProps.tag, "")
+                targetID = Ob.get("targetSetupID").replace(self.LandXML_Obj.TraverseProps.tag, "")
+            except AttributeError:
+                RemoveObs.append(key)
+                Ob.getparent().remove(Ob)
+                continue
 
-            if hasattr(self.CadastralPlan.Lines, ObsName):
+            if hasattr(self.CadastralPlan.Lines, ObsName) or\
+                    hasattr(self.CadastralPlan.TriedConnections, ObsName):
+                RemoveObs.append(key)
+            elif hasattr(self.CadastralPlan.Points, setupID) and \
+                hasattr(self.CadastralPlan.Points, targetID):
                 RemoveObs.append(key)
             elif not hasattr(self.CadastralPlan.Points, setupID) and \
                 not hasattr(self.CadastralPlan.Points, targetID):
                 RemoveObs.append(key)
+
 
         if len(RemoveObs) > 0:
             Observations = Connections.RemoveSelectedConnections(Observations, RemoveObs)
@@ -112,7 +122,17 @@ class ConnectionQuery:
                 TargetID = self.GetStart(Ob)
             except AttributeError:
                 continue
+
+            #Remove already calc'd Traget Obs
             TargObs = Connections.AllConnections(TargetID, self.LandXML_Obj)
+            RemoveTargObs = []
+            for key in TargObs.__dict__.keys():
+                Obs = TargObs.__getattribute__(key)
+                ObsName = Obs.get("name")
+                if hasattr(self.CadastralPlan.Lines, ObsName):
+                    RemoveTargObs.append(key)
+                    if len(RemoveTargObs) > 0:
+                        TargObs = Connections.RemoveSelectedConnections(TargObs, RemoveTargObs)
 
             if len(TargObs.__dict__.keys()) == 1:
                 RemoveObs.append(key)

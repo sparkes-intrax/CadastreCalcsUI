@@ -7,7 +7,7 @@ Generic Functions Used throughout program
 '''
 
 import numpy as np
-from numpy import sin, cos, radians
+from numpy import sin, cos, radians, arcsin
 
 def calcLineEquation(E1, E2, N1, N2):
     '''
@@ -155,6 +155,34 @@ def bearing2angle(bearing):
 
     return angle, deltaE, deltaN
 
+def Angle2Bearing(angle, deltaE, deltaN):
+    '''
+    Converts angle to bearing
+    :param angle:
+    :param deltaE:
+    :param deltaN:
+    :return:
+    '''
+
+    if deltaE > 0 and deltaN > 0:
+        bearing = 90 - angle
+    elif deltaE > 0 and deltaN < 0:
+        bearing = 90 + angle
+    elif deltaE < 0 and deltaN < 0:
+        bearing = 270 - angle
+    elif deltaE < 0 and deltaN > 0:
+        bearing = 270 + angle
+    elif deltaE == 0 and deltaN > 0:
+        bearing = 0
+    elif deltaE == 0 and deltaN < 0:
+        bearing = 180
+    elif deltaE > 0 and deltaN == 0:
+        bearing = 90
+    else:
+        bearing = 270
+
+    return bearing
+
 def textBearing(bearing):
     '''
     dxf text bearing (bearing 90 = 0 degrees and rotating to 359.9 @ bearing 90.1 )
@@ -259,6 +287,9 @@ def CalcChordLength(radius, arcLength):
     :return: chord length - distance
     '''
     return 2 * float(radius) * sin(float(arcLength) / (2 * float(radius)))
+
+def CalcArcLength(radius, chord):
+    return 2 * float(radius) * arcsin(float(chord)/(2 * float(radius)))
 
 class ArcCentreCoords:
 

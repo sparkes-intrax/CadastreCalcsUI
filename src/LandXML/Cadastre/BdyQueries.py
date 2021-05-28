@@ -255,13 +255,18 @@ class RunQuery:
         :param Observation: 
         :return: 
         '''
-        
+        ObsName = Observation.get("name")
         TargetID = Connections.GetTargetID(Observation, self.PntRefNum, self.LandXML_Obj.TraverseProps)
 
         TargObs = Connections.AllConnections(TargetID, self.LandXML_Obj)
+        #Remove Observations that are already calculated
+        #RemoveObs = []
+        #for key in TargObs.__dict__.keys():
+        #    Obs = TargObs.__getattribute__(key)
         if len(TargObs.__dict__.keys()) > 1:
             return True
         return False
+
 
     def CheckParcelLines(self, parcel, TargetID):
         '''

@@ -43,6 +43,12 @@ def main(LandXML_Obj, gui):
     pointObj = LinesPoints.AddPointToScene(gui.view, point, "REFERENCE MARKS")
 
     traverseCounter = 1
+    
+    #set plan origin
+    setattr(gui.CadastralPlan, "EastOrigin", StartPoint.Easting)
+    setattr(gui.CadastralPlan, "NorthOrigin", StartPoint.Northing)
+    setattr(gui, "CurrentCentreEasting", StartPoint.Easting)
+    setattr(gui, "CurrentCentreNorthing", StartPoint.Northing)
 
     #calculate RM traverses - keeps calculating traverses until all SSMs/PMs are calcd
     while(not CheckRMsNotCalculated(gui, LandXML_Obj.Monuments, LandXML_Obj)):

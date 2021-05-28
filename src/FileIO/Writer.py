@@ -13,7 +13,7 @@ def main(CadastralPlan):
     File = None
     if hasattr(CadastralPlan, "LandXmlFile"):
         Dialog = SelectOutputDir()
-        if Dialog.dir != "":
+        if Dialog.dir != "" and Dialog.dir is not None:
             dir = Dialog.dir
             LandXmlFile = CadastralPlan.LandXmlFile
             LandXmlFile = LandXmlFile.split("/")[-1]

@@ -230,3 +230,80 @@ class GuiDrawing(QGraphicsView):
         self.JoinPoints = False
         self.InsertPoints = True
 
+
+class UpdateView:
+    def __init__(self, gui, traverse):
+        '''
+        Updates the view to center on center of plan
+        :param gui:
+        '''
+        self.gui = gui
+        self.CadastralPlan = gui.CadastralPlan
+
+        #Get new centre
+        if traverse is not None:
+            self.NewCentreEast, self.NewCentreNorth = self.NewCentre(traverse.Points)
+        else:
+            self.NewCentreEast, self.NewCentreNorth = self.NewCentre(self.CadastralPlan.Points)
+
+        self.RecentreScene()
+        self.UpdateLoggedSceneCentre()
+
+    def NewCentre(self, Points):
+        '''
+        Finds the new centre of the view
+        :return:
+        '''
+        sumE = 0
+        sumN = 0
+        for i, key in enumerate(Points.__dict__.keys()):
+            point = Points.__getattribute__(key)
+            if point.__class__.__name__ != "Point":
+                continue
+
+            sumE += point.E
+            sumN += point.N
+
+        midE = sumE/i
+        midN = sumN/i
+        midN = self.GetNorthScreenCoords(midN)
+
+        return midE, midN
+
+    def GetNorthScreenCoords(self, North):
+        '''
+        Getes Northing of the new centre in screen coords
+        :param North:
+        :return:
+        '''
+
+        DistToOrigin = North - self.CadastralPlan.NorthOrigin
+        NorthingScreen = self.CadastralPlan.NorthOrigin - DistToOrigin
+        return NorthingScreen
+
+    def RecentreScene(self):
+        '''
+        Recentres the scene on self.NewCentreEast, self.NewCentreNorth
+        :return:
+        '''
+
+        #EndPos = QtCore.QPointF(self.NewCentreEast*1000, self.NewCentreNorth*1000)
+        #StartPos = QtCore.QPointF(self.gui.CurrentCentreEasting*1000,
+        #                          self.gui.CurrentCentreNorthing*1000)
+        self.gui.view.centerOn(self.NewCentreEast*1000, self.NewCentreNorth*1000)
+        #self.gui.view.fitInView()
+        #self.gui.view.setTransformationAnchor(QGraphicsView.NoAnchor)
+        #self.gui.view.setResizeAnchor(QGraphicsView.NoAnchor)
+        # move scene back
+        #delta = EndPos - StartPos
+        #self.gui.view.translate(delta.x(), delta.y())
+        #self.gui.view.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
+        #self.gui.view.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
+
+    def UpdateLoggedSceneCentre(self):
+        '''
+        Sets gui centre to coords of new centre
+        :return:
+        '''
+        self.gui.CurrentCentreEasting= self.NewCentreEast
+        self.gui.CurrentCentreNorthing = self.NewCentreNorth

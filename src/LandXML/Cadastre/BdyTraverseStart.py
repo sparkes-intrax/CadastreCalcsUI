@@ -142,8 +142,8 @@ class TraverseStart:
         # road frontage - part of a subdivision parcel
         #tObj = Timer()
         #tObj.start()
-        PntRefNum = self.CalculatedPoint()
-        #PntRefNum = self.ConnectionPoints("Road")
+        #PntRefNum = self.CalculatedPoint()
+        PntRefNum = self.ConnectionPoints("Road")
 
         #tObj.stop("Calculated Point road parcel connection",1)
         '''
@@ -189,7 +189,8 @@ class TraverseStart:
             self.TraverseProps.RmBdyTraverseStart = False
             return  PntRefNum
         
-        PntRefNum = self.CalculatedPoint()
+        #PntRefNum = self.CalculatedPoint()
+        PntRefNum = self.ConnectionPoints("Any")
         self.TraverseProps.RmBdyTraverseStart = False
             
         return PntRefNum
@@ -236,19 +237,21 @@ class TraverseStart:
         #get connections
         Observations = ConnectionObservations.main(self.gui.CadastralPlan, self.LandXML_Obj,
                                                    Query)
-        '''
-        if Query == "Road":
+
+        if Query == "Connection":
+            PntRefNum = BdyQueries.TestTargetObservations(Observations, self.LandXML_Obj, self.gui,
+                                                      self.QueryType, None, True)
+
+        else:
             QueryObj = BdyQueries.RunQuery(Observations, self.LandXML_Obj, self.QueryType,
-                                           False, self.gui.CadastralPlan,True)
+                                           False, self.gui.CadastralPlan, True)
             ObsFound = QueryObj.CoordinateQuery()
             if ObsFound:
                 PntRefNum = QueryObj.PntRefNum
             else:
                 PntRefNum = False
-        else:
-        '''
-        PntRefNum = BdyQueries.TestTargetObservations(Observations, self.LandXML_Obj, self.gui,
-                                                 self.QueryType, None, True)
+
+
 
         return PntRefNum
 

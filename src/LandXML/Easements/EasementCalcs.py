@@ -40,7 +40,7 @@ class EasementCalcs:
         StartObs, StartPntRef, ObsToCalc = EasementStartObj.GetStartObservation(EasementParcel)
         if StartObs is not None:
 
-            print(EasementParcel.get("name"))
+            #print(EasementParcel.get("name"))
             StartObs.getparent().remove(StartObs)
             ObsToCalc.remove(StartObs)
             EasementTravOb = EasementTraverse.Traverse(self.LandXML_Obj, self.gui, EasementParcel)

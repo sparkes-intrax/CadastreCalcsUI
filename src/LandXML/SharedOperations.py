@@ -4,6 +4,7 @@ Set of common functions used by all traverse type calculated from LandXMl
 '''
 import CadastreClasses as DataObjects
 from TraverseOperations import TraverseOperations, TraverseClose
+from GUI_Objects import GraphicsView
 import MessageBoxes
 from LandXML import TraverseErrorWindow
 from DrawingObjects import DrawTraverse
@@ -51,35 +52,67 @@ def ApplyCloseAdjustment(traverse, LandXML_Obj, gui):
 
         if close_error >1e10 and traverse.type != "EASEMENT":
             MessageBoxes.genericMessage(message, title)
-        elif close_error > 5 and traverse.type == "EASEMENT":
+        elif close > 5 and traverse.type == "EASEMENT":
             MessageBoxes.genericMessage(message, title)
 
-        if close > 1:
-            DrawCurrentTraverse(gui, traverse)
-            Dialog = TraverseErrorWindow.TraverseErrorWin(gui, traverse, LandXML_Obj)
-            Dialog.exec_()
-            if Dialog.Changed:
-                N_Error = Dialog.N_Error
-                E_Error = Dialog.E_Error
-                traverse = CalculateTraverseDistances(traverse)
-                close = Dialog.close
-                close_error = (close/traverse.Distance) * 1e6
+        if (close*1000 > 20 or close_error > 75) and \
+                traverse.type == "REFERENCE MARKS" and \
+                not traverse.MixedTraverse and close*1000 >= 6:
 
-                RemoveDrawnTraverse(gui, traverse)
-            else:
+            Dialog = CloseErrorWindow(gui, traverse, LandXML_Obj)
+            if not Dialog.Changed:
+                if Dialog.AdjustCurrentTrav:
+                    traverse = TraverseAdjustment(traverse, gui.CadastralPlan, E_Error, N_Error)
                 return gui
+
+        elif close_error > 75 and close*1000 >= 6:
+            Dialog = CloseErrorWindow(gui, traverse, LandXML_Obj)
+            if not Dialog.Changed:
+                if Dialog.AdjustCurrentTrav:
+                    traverse = TraverseAdjustment(traverse, gui.CadastralPlan, E_Error, N_Error)
+                return gui
+
                 
 
         if LandXML_Obj.TraverseProps.ApplyCloseAdjustment and close_error < 1000:
-            TraverseClose.TraverseAdjustment(traverse, gui.CadastralPlan,
-                                         E_Error, N_Error)
-            traverse = CleanUpTraverseEnd(traverse)
+            traverse = TraverseAdjustment(traverse, gui.CadastralPlan, E_Error, N_Error)
         elif close_error < 1:
             traverse = CleanUpTraverseEnd(traverse)
         else:
             DrawCurrentTraverse(gui, traverse)
     
     return gui
+
+def CloseErrorWindow(gui, traverse, LandXML_Obj):
+    '''
+    Calls traverse close and traverse component window
+    :param gui:
+    :param traverse:
+    :param LandXML_Obj:
+    :return:
+    '''
+
+    GraphicsView.UpdateView(gui, traverse)
+    DrawCurrentTraverse(gui, traverse)
+    Dialog = TraverseErrorWindow.TraverseErrorWin(gui, traverse, LandXML_Obj)
+    Dialog.exec_()
+    if Dialog.Changed:
+        N_Error = Dialog.N_Error
+        E_Error = Dialog.E_Error
+        traverse = CalculateTraverseDistances(traverse)
+        close = Dialog.close
+        close_error = (close / traverse.Distance) * 1e6
+
+    RemoveDrawnTraverse(gui, traverse)
+
+    return Dialog
+
+def TraverseAdjustment(traverse, CadastralPlan, E_Error, N_Error):
+    TraverseClose.TraverseAdjustment(traverse, CadastralPlan,
+                                     E_Error, N_Error)
+    traverse = CleanUpTraverseEnd(traverse)
+    
+    return traverse
 
 def DrawCurrentTraverse(gui, traverse):
     DrawObj = DrawTraverse.DrawTraverse(gui, traverse, Qt.red)
@@ -155,7 +188,7 @@ def CalculateTraverseDistances(traverse):
     #loop through lines to calculate distances
     for key in traverse.Lines.__dict__.keys():
         line = traverse.Lines.__getattribute__(key)
-        if line.__class__.__name__ != "Line":
+        if key == "LineNum":
             continue
 
         distance += float(line.__getattribute__("Distance"))

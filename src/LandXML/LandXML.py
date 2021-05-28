@@ -13,6 +13,8 @@ from LandXML import LandXML_Traverse_Props, LandXML_IO, ConnectionMopper
 from LandXML.RefMarks import RefMark_Traverse
 from LandXML.Cadastre import CadastreTraverse
 from LandXML.Easements import EasementCalcs
+from LandXML.TextLabels import LabelCoordinator
+from GUI_Objects import GraphicsView
 
 import CadastreClasses as DataObjects
 
@@ -49,8 +51,11 @@ def LandXML(gui):
             #Calculate Easements
             EaseTravObj = EasementCalcs.main(LandXML_Obj, gui)
 
-        #Reset screen coords
-        #setSceneCoords(gui)
+        #Create and Draw Labels
+        LabelCoordinator.main(LandXML_Obj, gui)
+
+        #set screen coordinates
+        GraphicsView.UpdateView(gui, None)
 
 
 

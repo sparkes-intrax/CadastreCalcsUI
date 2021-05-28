@@ -93,7 +93,10 @@ class AddPointToScene:
         CodeLabel = view.scene.addText(self.point.Code)
         CodeLabel.setPos(int(E + 250), int(N - 4000))
         CodeLabel.setDefaultTextColor(self.Colour)
-        CodeLabel.setFont(QFont('Times', 1500, QFont.Light))
+        if "SSM" in self.point.Code or "PM" in self.point.Code:
+            CodeLabel.setFont(QFont('Times', 6000, QFont.Light))
+        else:
+            CodeLabel.setFont(QFont('Times', 1500, QFont.Light))
         CodeLabel.setRotation(-30)
         CodeLabel.resetTransform()
         CodeLabel.setFlag(QGraphicsItem.ItemIsSelectable, True)

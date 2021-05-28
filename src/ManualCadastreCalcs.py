@@ -26,14 +26,23 @@ from TraverseOperations import TraverseOperations, TraverseObject
 from Polygons import ViewPolygon
 import MessageBoxes
 from LandXML import LandXML
+#import psutil
 
 
 class Window(QMainWindow):
     def __init__(self):
         super().__init__()
 
+        # set up window icon
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap("IntraxMadIcon.ico"), QtGui.QIcon.Normal, QtGui.QIcon.On)
+        icon.addPixmap(QtGui.QPixmap("IntraxMadIcon.ico"), QtGui.QIcon.Selected, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap("IntraxMadIcon.ico"), QtGui.QIcon.Selected, QtGui.QIcon.On)
+        self.setWindowIcon(icon)
+        self.setAutoFillBackground(True)
+
         #window properties
-        self.title = "Cadastre Calcs"
+        self.title = "Manual & Digital Calcs"
         self.top = 30
         self.left = 30
         self.width = 1500
@@ -72,11 +81,14 @@ class Window(QMainWindow):
 
     def InitWindow(self):
 
+
+
+
         self.view = GraphicsView.GuiDrawing(self)
         self.groupBox_Drawing.Layout.addWidget(self.view, 1, 1, 1, 1)
 
 
-        self.setWindowIcon(QtGui.QIcon("icon.png"))
+        #self.setWindowIcon(QtGui.QIcon("icon.png"))
         self.setWindowTitle(self.title)
         self.setGeometry(self.top, self.left, self.width, self.height)
         self.setStyleSheet("background-color: %s;" % self.Colours.backgroundUI)
@@ -1242,6 +1254,11 @@ def ButtonFont():
 
 
 if __name__ == "__main__":
+    #process = psutil.Process()
+
+    # Print all loaded DLLs.
+    #for i in process.memory_maps():
+    #    print(i.path)
     app = QtWidgets.QApplication(sys.argv)
     mainWin = Window()
     mainWin.show()

@@ -204,6 +204,8 @@ class ObservationMop:
         # get coordinates for centre of the arc
         CentreArcCoords = funcs.ArcCentreCoords(self.SrcPoint, self.point,
                                            self.radius, self.rotation)
+        ArcAngles = funcs.ArcAngles(self.SrcPoint, self.point,
+                                           CentreArcCoords, self.rotation)
 
 
         #create arc object
@@ -211,7 +213,7 @@ class ObservationMop:
                           self.LineLayer, self.radius,
                           CentreArcCoords, self.rotation, self.distance,
                           self.bearing, self.PointObj.deltaE,
-                            self.PointObj.deltaN, self.LineColour)
+                            self.PointObj.deltaN, self.LineColour, ArcAngles)
     
     def CheckClose(self):
         '''

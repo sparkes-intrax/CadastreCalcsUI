@@ -157,7 +157,8 @@ class Labels(object):
     pass
 
 class LabelObj():
-    def __init__(self, textStr, easting, northing, orientation):
+    def __init__(self, textStr, easting, northing, NorthingScreen, 
+                 orientation, ParcelType):
         '''
         stores text entities, their location and orientation
         :param textStr:
@@ -169,7 +170,9 @@ class LabelObj():
         self.Label = textStr
         self.Easting = easting
         self.Northing = northing
+        self.NorthingScreen = NorthingScreen
         self.Orientation = orientation
+        self.ParcelType = ParcelType
 
 
 #Traverse objects - adds different traverse instances

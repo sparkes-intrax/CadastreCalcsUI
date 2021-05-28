@@ -9,6 +9,8 @@ from GUI_Objects import ColourScheme, InputObjects, ButtonObjects
 from GUI_Objects import Fonts, GroupBoxes, ObjectStyleSheets
 from TraverseOperations import TraverseRecalculate
 import MessageBoxes
+import genericFunctions as funcs
+from lxml import etree
 
 
 class TraverseErrorWin(QDialog):
@@ -17,6 +19,7 @@ class TraverseErrorWin(QDialog):
         self.gui = gui
         self.traverse = traverse
         self.LandXML_Obj = LandXML_Obj
+        self.AdjustCurrentTrav = False
 
         #Set up window
         self.WindowTitle = "Traverse Error"
@@ -64,6 +67,9 @@ class TraverseErrorWin(QDialog):
         left = self.gui.width
         numLines = len(self.traverse.Lines.__dict__.keys())
         self.winHeight = 150 + numLines * 30
+        if self.winHeight > self.gui.frameGeometry().height():
+            self.winHeight = self.gui.frameGeometry().height() - 50
+
         self.setGeometry(left, 30, 400, self.winHeight)
 
     def CloseSpecs(self):
@@ -74,20 +80,22 @@ class TraverseErrorWin(QDialog):
         Font = QFont("Segoe UI", 10,)
         LabelColour  = "white"
         self.TravDistLabel = QLabel(self)
-        txtStr = "Traverse Distance(m): " + str(self.traverse.Distance)
+        txtStr = "Traverse Distance(m): " + str(round(self.traverse.Distance,2))
         self.TravDistLabel.setText(txtStr)
         self.TravDistLabel.setFont(Font)
         self.TravDistLabel.setStyleSheet("color: %s;" % LabelColour)
         self.TravDistLabel.setObjectName("TravDistLabel")
+        self.TravDistLabel.setMaximumHeight(15)
         self.GB_Main.Layout.addWidget(self.TravDistLabel, 1, 0, 1, 1)
 
         self.TravCloseLabel = QLabel(self)
-        misclose = str(round(float(self.traverse.Close_PreAdjust/1000),4))
-        txtStr = "Traverse Misclose (m): " + misclose
+        misclose = str(round(float(self.traverse.Close_PreAdjust),1))
+        txtStr = "Traverse Misclose (mm): " + misclose
         self.TravCloseLabel.setText(txtStr)
         self.TravCloseLabel.setFont(Font)
         self.TravCloseLabel.setStyleSheet("color: %s;" % LabelColour)
         self.TravCloseLabel.setObjectName("TravDistLabel")
+        self.TravCloseLabel.setMaximumHeight(15)
         self.GB_Main.Layout.addWidget(self.TravCloseLabel, 2, 0, 1, 1)
         
         Font =Fonts.comboBoxFont()
@@ -96,6 +104,7 @@ class TraverseErrorWin(QDialog):
         self.ObsNameLabel.setFont(Font)
         self.ObsNameLabel.setStyleSheet("color: %s;" % LabelColour)
         self.ObsNameLabel.setObjectName("TravDistLabel")
+        self.ObsNameLabel.setMaximumHeight(15)
         self.GB_Main.Layout.addWidget(self.ObsNameLabel, 3, 0, 1, 1)
         
         self.BearingLabel = QLabel(self)
@@ -103,12 +112,14 @@ class TraverseErrorWin(QDialog):
         self.BearingLabel.setFont(Font)
         self.BearingLabel.setStyleSheet("color: %s;" % LabelColour)
         self.BearingLabel.setObjectName("TravDistLabel")
+        self.BearingLabel.setMaximumHeight(15)
         self.GB_Main.Layout.addWidget(self.BearingLabel, 3, 1, 1, 1)
         self.DistanceLabel = QLabel(self)
         self.DistanceLabel.setText("Distance")
         self.DistanceLabel.setFont(Font)
         self.DistanceLabel.setStyleSheet("color: %s;" % LabelColour)
         self.DistanceLabel.setObjectName("TravDistLabel")
+        self.DistanceLabel.setMaximumHeight(15)
         self.GB_Main.Layout.addWidget(self.DistanceLabel, 3, 2, 1, 1)
 
     def SideBearingDistances(self):
@@ -139,20 +150,31 @@ class TraverseErrorWin(QDialog):
         Font = Fonts.ButtonFont()
         self.ButtonOk = ButtonObjects.Add_QButton(self.GB_Main, "OK",
                                                           "OkButton", Font,
-                                                          self.ClickedOk, 20, 20,
+                                                          self.ClickedOk, 50, 20,
                                                           (self.row+1), 0, 1, 1, self.Colours.buttonColour,
                                                           self.Colours.buttonTextColor,
                                                           self.Colours.buttonHoverColour)
 
         self.Recalc = ButtonObjects.Add_QButton(self.GB_Main, "Recalculate",
-                                                       "Recalculate", Font,
-                                                       self.Recaculate, 150, 20,
-                                                       (self.row + 1), 1, 1, 2, self.Colours.buttonColour,
+                                                       "Recalc", Font,
+                                                       self.Recaculate, 50, 20,
+                                                       (self.row + 1), 1, 1, 1, self.Colours.buttonColour,
                                                        self.Colours.buttonTextColor,
                                                        self.Colours.buttonHoverColour)
 
+        self.Adjust = ButtonObjects.Add_QButton(self.GB_Main, "Adjust",
+                                                "Adjust", Font,
+                                                self.AdjustTrav, 50, 20,
+                                                (self.row + 1), 2, 1, 1, self.Colours.buttonColour,
+                                                self.Colours.buttonTextColor,
+                                                self.Colours.buttonHoverColour)
+
 
     def ClickedOk(self):
+        self.accept()
+        
+    def AdjustTrav(self):
+        self.AdjustCurrentTrav = True
         self.accept()
 
 
@@ -174,7 +196,7 @@ class TraverseErrorWin(QDialog):
 
             #Update close in window
             for key in keyChanged:
-                misclose = str(round(float(self.traverse.Close_PreAdjust / 1000), 4))
+                misclose = str(round(float(self.traverse.Close_PreAdjust), 1))
                 txtStr = "Traverse Misclose (m): " + misclose
                 self.TravCloseLabel.setText(txtStr)
 
@@ -213,8 +235,8 @@ class TraverseErrorWin(QDialog):
         :return:
         '''
 
-        lxml = self.LandXML_Obj.lxml
-        ns = self.LandXML_Obj.lxml.getroot().nsmap
+        lxml = etree.parse(self.gui.CadastralPlan.LandXmlFile)
+        ns = lxml.getroot().nsmap
         for key in keyChanged:
             ObsForm = self.__getattribute__("ObsForm_"+key)
             # Reduced Observations
@@ -225,18 +247,25 @@ class TraverseErrorWin(QDialog):
                 # get Observation
                 Obs = Observations[0]
                 Obs.attrib['horizDistance'] = ObsForm.DistanceEdit.text()
-                Obs.attrib['azimuth'] = ObsForm.BearingEdit.text()
+                bearing = self.BearingFlippedQuery(key, Obs, ObsForm.BearingEdit.text())
+                Obs.attrib['azimuth'] = bearing
             else:
                 # Reduced ArcObservations
                 tag = "//ReducedArcObservation"
                 Query = tag + "[@name='" + key + "']"
                 Observations = lxml.findall(Query, ns)
                 if len(Observations) == 1:
-                    msg = "Modifying Arcs is not supported in this version.\n" \
-                          "Further investigation is required"
-                    MessageBoxes.genericMessage(msg, "Arc Not Supported")
+                    Obs = Observations[0]
+                    radius = Obs.get("radius")
+                    bearing = self.BearingFlippedQuery(key, Obs, ObsForm.BearingEdit.text())
+                    Obs.attrib["chordAzimuth"] = bearing
+                    ArcLength = round(funcs.CalcArcLength(radius, ObsForm.DistanceEdit.text()),3)
+                    Obs.attrib["length"] = str(ArcLength)
+                    #msg = "Modifying Arcs is not supported in this version.\n" \
+                    #      "Further investigation is required"
+                    #MessageBoxes.genericMessage(msg, "Arc Not Supported")
 
-        with open(self.gui.LandXmlFile, 'wb') as f:
+        with open(self.gui.CadastralPlan.LandXmlFile, 'wb') as f:
             lxml.write(f)
             
     def UpdateLineParams(self, keyChanged):
@@ -250,6 +279,30 @@ class TraverseErrorWin(QDialog):
             ObsForm = self.__getattribute__("ObsForm_" + key)
             Line.Distance = float(ObsForm.DistanceEdit.text())
             Line.Bearing = ObsForm.BearingEdit.text()
+
+    def BearingFlippedQuery(self, key, Obs, bearing):
+        '''
+        Checks if bearing was flipped before writing back to landXML
+        :return:
+        '''
+        #get traverse line start ref
+        line = self.traverse.Lines.__getattribute__(key)
+        StartRef = line.StartRef
+
+        #get observation start ref
+        SetupID = Obs.get("setupID").replace(self.LandXML_Obj.TraverseProps.tag, "")
+
+        if SetupID != StartRef:
+            bearing = str(funcs.FlipBearing(float(bearing)))
+            if len(bearing.split(".")[1]) == 1 or len(bearing.split(".")[1]) == 3:
+                bearing += "0"
+
+
+
+        return bearing
+
+
+
 
 class SideObjects:
     def __init__(self, GB, Line, row, name):

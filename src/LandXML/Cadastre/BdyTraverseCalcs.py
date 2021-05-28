@@ -70,7 +70,10 @@ class TraverseCalcs:
                 if len(self.TriedConnections.__dict__.keys()) > 1:
                     self.AddTriedConnections()
                 elif not self.LandXML_Obj.TraverseProps.TraverseClose:
+                    self.AddStartObservations()
                     return self.Branches.CurrentBranch
+                else:
+                    self.AddStartObservations()
                 break
 
             self.Branches.CurrentBranch = ObservationObj.traverse
@@ -148,6 +151,24 @@ class TraverseCalcs:
             if not hasattr(self.CadastralPlan.TriedConnections, key):
                 setattr(self.CadastralPlan.TriedConnections, key, Obs)
                 print("added tried connection")
+
+    def AddStartObservations(self):
+        '''
+        When no connections from start point are found
+        Adds all Observations form start point to cadastral plan
+        :return:
+        '''
+
+        Observations = Connections.AllConnections(self.PntRefNum, self.LandXML_Obj)
+        for key in Observations.__dict__.keys():
+            Obs = Observations.__getattribute__(key)
+            ObsName = Obs.get("name")
+            TargetID = Connections.GetTargetID(Obs, self.PntRefNum, self.LandXML_Obj.TraverseProps)
+            Line =DataObjects.Line(self.PntRefNum, TargetID,
+                                   "BOUNDARY", None, None, None, None, None)
+
+            setattr(self.CadastralPlan.TriedConnections, ObsName, Line)
+
 
 
 

@@ -89,6 +89,8 @@ class CommitTraverse:
         '''
         
         for key in Points.__dict__.keys():
+            if key == "PointList":
+                continue
             Point = Points.__getattribute__(key)
             setattr(CadastralPlan.Points, Point.PntNum, Point)
             
@@ -138,6 +140,8 @@ class CommitTraverse:
         '''
 
         for key in Points.__dict__.keys():
+            if key == "PointList":
+                continue
             point = Points.__getattribute__(key)
             Layer = point.Layer
             PointProps = LinesPoints.LinePointProperties()
@@ -214,6 +218,8 @@ class CheckTraverseClose:
         CloseError = None
 
         for key in object.Points.__dict__.keys():
+            if key == 'PointList':
+                continue
             ClosePoint = object.Points.__getattribute__(key)
             CloseError = self.Distance(point.E, ClosePoint.E,
                                             point.N, ClosePoint.N)
@@ -287,6 +293,8 @@ class ColourTraverseObjects:
         '''
 
         for key in gui.traverse.Points.__dict__.keys():
+            if key == "PointList":
+                continue
             point = gui.traverse.Points.__getattribute__(key)
             PointItem = point.GraphicsItems.Point
             self.SetObjectPen(PointItem, Colour, lineWidth)
@@ -349,6 +357,8 @@ def RemoveCurrentTraverseFromGui(gui):
 
     #delete points
     for key in gui.traverse.Points.__dict__.keys():
+        if key == "PointList":
+            continue
         Point = gui.traverse.Points.__getattribute__(key)
         #remove the graphicsItems
         GraphicsItems = Point.GraphicsItems
@@ -434,6 +444,8 @@ class RedrawTraverse:
         '''
 
         for key in gui.traverse.Points.__dict__.keys():
+            if key == "PointList":
+                continue
             point = gui.traverse.Points.__getattribute__(key)
             LinesPoints.AddPointToScene(gui.view, point, point.Layer)
 
