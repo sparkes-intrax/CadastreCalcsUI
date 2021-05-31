@@ -10,6 +10,7 @@ from GUI_Objects import Fonts, GroupBoxes, ObjectStyleSheets
 from TraverseOperations import TraverseRecalculate
 import MessageBoxes
 import genericFunctions as funcs
+from LandXML import LandXML_Objects
 from lxml import etree
 
 
@@ -236,6 +237,7 @@ class TraverseErrorWin(QDialog):
         '''
 
         lxml = etree.parse(self.gui.CadastralPlan.LandXmlFile)
+        lxml = LandXML_Objects.RemoveComments(lxml)
         ns = lxml.getroot().nsmap
         for key in keyChanged:
             ObsForm = self.__getattribute__("ObsForm_"+key)

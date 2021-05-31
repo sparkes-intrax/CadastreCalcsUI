@@ -20,10 +20,12 @@ def initialiseTraverse(StartPoint, Layer, FirstTraverse):
     :param FirstTraverse: whether first traverse in calcs - bool
     :return: 
     '''
-
-    point = DataObjects.Point(StartPoint.PntRefNum, StartPoint.Easting, StartPoint.Northing,
+    if not hasattr(StartPoint, "Elev"):
+        point = DataObjects.Point(StartPoint.PntRefNum, StartPoint.Easting, StartPoint.Northing,
                               StartPoint.NorthingScreen, None, StartPoint.Code, StartPoint.Layer)
-    traverse = TraverseOperations.NewTraverse(Layer, StartPoint.PntRefNum, FirstTraverse, point)
+        traverse = TraverseOperations.NewTraverse(Layer, StartPoint.PntRefNum, FirstTraverse, point)
+    else:
+        traverse = TraverseOperations.NewTraverse(Layer, StartPoint.PntNum, FirstTraverse, StartPoint)
 
     return traverse
 

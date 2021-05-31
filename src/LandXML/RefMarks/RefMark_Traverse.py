@@ -2,7 +2,7 @@
 Workflow for Reference mark traverses
 '''
 import CadastreClasses as DataObjects
-from LandXML import Connections, BDY_Connections, SharedOperations#, LandXML_Traverses
+from LandXML import Connections, BDY_Connections, SharedOperations, PointClass#, LandXML_Traverses
 from LandXML.RefMarks import TraverseStart, RM_TraverseCalcs
 from TraverseOperations import TraverseOperations, TraverseClose
 
@@ -28,8 +28,16 @@ def main(LandXML_Obj, gui):
             LandXML_Obj.TraverseProps.LargeLots = True
         elif StartPoint.PntRefNum is None:
             LandXML_Obj.TraverseProps.ExistingLots = True
+            
+    #draw point on canvas
+    PointClassObj = PointClass.Points(LandXML_Obj, None)
+    Elevation = PointClassObj.CheckElevation(StartPoint.PntRefNum)
+    point = DataObjects.Point(StartPoint.PntRefNum, StartPoint.Easting, StartPoint.Northing,
+                              StartPoint.Northing, Elevation, StartPoint.Code, "REFERENCE MARKS")
+    pointObj = LinesPoints.AddPointToScene(gui.view, point, "REFERENCE MARKS")
+    
     #create new traverse and add start point
-    traverse = SharedOperations.initialiseTraverse(StartPoint, "REFERENCE MARKS", True)
+    traverse = SharedOperations.initialiseTraverse(point, "REFERENCE MARKS", True)
     #setattr(gui, "traverse", traverse)
 
     #set traverse props for RM traverses
@@ -37,10 +45,7 @@ def main(LandXML_Obj, gui):
     setattr(LandXML_Obj.TraverseProps, "BdyConnections", True)
     setattr(LandXML_Obj.TraverseProps, "MixedTraverse", False)
 
-    #draw point on canvas
-    point = DataObjects.Point(StartPoint.PntRefNum, StartPoint.Easting, StartPoint.Northing,
-                              StartPoint.Northing, None, StartPoint.Code, "REFERENCE MARKS")
-    pointObj = LinesPoints.AddPointToScene(gui.view, point, "REFERENCE MARKS")
+
 
     traverseCounter = 1
     

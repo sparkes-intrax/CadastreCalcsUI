@@ -25,6 +25,13 @@ class Points:
         Code = RefMarkQueries.GetPointCode(self.LandXML_Obj, TargetID)
         if Code == "RMDH&W":
             Code = "RMDHW"
+            
+        #Check Elevation
+        if RefMarkQueries.CheckIfRefMark(self.LandXML_Obj, TargetID):
+            self.Elevation = self.CheckElevation(TargetID)
+        else:
+            self.Elevation = None
+            
         #convert bearing to decimal
         bearing = funcs.bearing2_dec(bearingDMS)
         #Return angle for point calculate and its sign for Easting and Northing
@@ -42,7 +49,7 @@ class Points:
 
         # create new point object
         point = DataObjects.Point(TargetID, self.E, self.N, self.N_Screen,
-                                  None, Code, Layer)
+                                  self.Elevation, Code, Layer)
         
         return point
 
@@ -92,3 +99,26 @@ class Points:
         self.Northing = point.N
         self.NorthingScreen = point.NorthingScreen
         self.Layer = point.Layer
+
+    def CheckElevation(self, PntRefNum):
+        '''
+        Checks if a vertical observation coorepsonds to Target
+        :return:
+        '''
+
+        ObsID = self.LandXML_Obj.TraverseProps.tag + PntRefNum
+        ns = self.LandXML_Obj.lxml.getroot().nsmap
+
+        # Reduced Observations
+        tag = "//RedVerticalObservation"
+        Query = tag + "[@setupID='" + ObsID + "']"
+        Observations = self.LandXML_Obj.lxml.findall(Query, ns)
+
+        if len(Observations) > 0:
+            Elevation = Observations[0].get("height")
+            if float(Elevation.split(".")[1]) == 0:
+                return None
+            else:
+                return float(Elevation)
+        else:
+            return None

@@ -6,9 +6,11 @@ Adds traverse side to current traverse and gui
 import genericFunctions as funcs
 import CadastreClasses as DataObjects
 from LandXML.RefMarks import RefMarkQueries
-from LandXML import Connections, BDY_Connections
+from LandXML import Connections, BDY_Connections, PointClass
 from DrawingObjects import LinesPoints
 from numpy import sin, cos, radians
+
+
 class TraverseSide:
 
     def __init__(self, PntRefNum, traverse, Connection, gui, LandXML_Obj):
@@ -48,7 +50,7 @@ class TraverseSide:
         #get new points PntRefNum
         self.TargPntRefNum = self.GetTargetPointRefNum()        
         #get Point code - if RM
-        self.Code = self.GetPointCode()
+        self.Code, self.Elevation = self.GetPointCode()
         if hasattr(self.traverse.Points, self.TargPntRefNum):
             self.TargPntRefNum = self.TargPntRefNum + "_1"
         self.traverse.refPnts.append(self.TargPntRefNum)
@@ -120,7 +122,7 @@ class TraverseSide:
 
         # create new point object
         self.point = DataObjects.Point(self.TargPntRefNum, self.E, self.N, self.N_Screen,
-                                  None, self.Code, Layer)
+                                  self.Elevation, self.Code, Layer)
 
     def GetTargetPointRefNum(self):
         '''
@@ -164,6 +166,7 @@ class TraverseSide:
         '''
         # Get RM type - None if not RM
         MarkType = RefMarkQueries.FindMarkType(self.LandXML_Obj, self.TargPntRefNum)
+        Elevation = None
         if MarkType is not None:
             Code = "RM"+MarkType
 
@@ -173,10 +176,14 @@ class TraverseSide:
                     Code += "-" + RefMarkQueries.GetMarkNumber(self.LandXML_Obj, self.TargPntRefNum)
                 except TypeError:
                     Code += "-" + RefMarkQueries.GetMarkNumberMonuments(self.LandXML_Obj, self.TargPntRefNum)
+                
+                #check if point has a elevation in the landdXML
+                PointClassObj = PointClass.Points(self.LandXML_Obj, None)
+                Elevation = PointClassObj.CheckElevation(self.TargPntRefNum)
         else:
             Code = ""
 
-        return Code
+        return Code, Elevation
 
     def SetLinePointGuiProps(self):
         '''
@@ -381,6 +388,8 @@ class TraverseSide:
                     return True
 
         return False
+
+
 
 
 

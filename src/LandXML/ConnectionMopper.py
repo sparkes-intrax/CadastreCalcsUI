@@ -96,6 +96,7 @@ class ObservationMop:
             self.LineObj(Flip)
             self.DrawObservation()
             Observation.getparent().remove(Observation)
+            
 
 
         #print("Done")

@@ -14,6 +14,8 @@ def main(file, TraverseProps):
 
     #open landXML file
     lxml = etree.parse(file)
+    #remove comments from lxml
+    lxml = RemoveComments(lxml)
 
     ##populated data classes of LandXML_Obj
     LandXML_Obj = PopulateLandXML_Object(lxml, LandXML_Obj, TraverseProps)
@@ -49,6 +51,15 @@ def PopulateLandXML_Object(lxml, LandXML_Obj, TraverseProps):
     
     return LandXML_Obj
 
+def RemoveComments(lxml):
+    comments = lxml.xpath('//comment()')
+    try:
+        for comment in comments:
+            parent = comment.getparent()
+            parent.remove(comment)
+    except AttributeError:
+        pass
+    return lxml
 
 class FileObj(object):
 
