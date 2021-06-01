@@ -69,6 +69,34 @@ def FlipBearing(bearing):
         
     return round(bearing,4)
 
+def BearingFromDeltas(deltaE, deltaN):
+    '''
+    Calculates bearing from deltaE and deltaN
+    :param deltaE:
+    :param deltaN:
+    :return:
+    '''
+
+    E = abs(deltaE)
+    N= abs(deltaN)
+    angle = np.degrees(np.arctan(N/E))
+    
+    bearing = Angle2Bearing(angle, deltaE, deltaN)
+    
+    bearing = bearing2_DMS(bearing)
+    
+    if len(bearing.split(".")) == 1:
+        bearingStr = bearing + eval(r'"\u00B0"')
+    elif len(bearing.split(".")[1]) == 2:
+        bearingStr = bearing.split(".")[0] + eval(r'"\u00B0"') + \
+                     bearing.split(".")[1][0:2] + "'"
+    else:
+        bearingStr = bearing.split(".")[0] + eval(r'"\u00B0"') + \
+                     bearing.split(".")[1][0:2] + "' " + \
+                     bearing.split(".")[1][2:] + "\""
+        
+    return bearingStr
+
 def calcBearing(startE, startN, endE, endN):
     '''
     calculates bearing of a line from 2 points

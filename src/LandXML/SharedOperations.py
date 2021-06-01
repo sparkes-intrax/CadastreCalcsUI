@@ -9,7 +9,7 @@ import MessageBoxes
 from LandXML import TraverseErrorWindow
 from DrawingObjects import DrawTraverse
 from PyQt5.QtCore import Qt
-
+import genericFunctions as funcs
 
 
 def initialiseTraverse(StartPoint, Layer, FirstTraverse):
@@ -37,6 +37,7 @@ def ApplyCloseAdjustment(traverse, LandXML_Obj, gui):
     traverse = CalculateTraverseDistances(traverse)
     if LandXML_Obj.TraverseProps.TraverseClose:
         N_Error, E_Error, close = TraverseClose.misclose(traverse, gui.CadastralPlan)
+        setattr(traverse, "CloseBearing", funcs.BearingFromDeltas(E_Error, N_Error))
         traverse.Close_PreAdjust = round(close*1000,4)
         if traverse.Distance != 0:
             close_error = (close/traverse.Distance) * 1e6

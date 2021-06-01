@@ -81,7 +81,7 @@ class TraverseErrorWin(QDialog):
         Font = QFont("Segoe UI", 10,)
         LabelColour  = "white"
         self.TravDistLabel = QLabel(self)
-        txtStr = "Traverse Distance(m): " + str(round(self.traverse.Distance,2))
+        txtStr = "Distance(m): " + str(round(self.traverse.Distance,2))
         self.TravDistLabel.setText(txtStr)
         self.TravDistLabel.setFont(Font)
         self.TravDistLabel.setStyleSheet("color: %s;" % LabelColour)
@@ -91,13 +91,22 @@ class TraverseErrorWin(QDialog):
 
         self.TravCloseLabel = QLabel(self)
         misclose = str(round(float(self.traverse.Close_PreAdjust),1))
-        txtStr = "Traverse Misclose (mm): " + misclose
+        txtStr = "Misclose (mm): " + misclose
         self.TravCloseLabel.setText(txtStr)
         self.TravCloseLabel.setFont(Font)
         self.TravCloseLabel.setStyleSheet("color: %s;" % LabelColour)
         self.TravCloseLabel.setObjectName("TravDistLabel")
         self.TravCloseLabel.setMaximumHeight(15)
         self.GB_Main.Layout.addWidget(self.TravCloseLabel, 2, 0, 1, 1)
+
+        self.TravCloseBearingLabel = QLabel(self)
+        txtStr = "Misclose Bearing: " + self.traverse.CloseBearing
+        self.TravCloseBearingLabel.setText(txtStr)
+        self.TravCloseBearingLabel.setFont(Font)
+        self.TravCloseBearingLabel.setStyleSheet("color: %s;" % LabelColour)
+        self.TravCloseBearingLabel.setObjectName("TravDistLabel")
+        self.TravCloseBearingLabel.setMaximumHeight(15)
+        self.GB_Main.Layout.addWidget(self.TravCloseBearingLabel, 3, 0, 1, 1)
         
         Font =Fonts.comboBoxFont()
         self.ObsNameLabel = QLabel(self)
@@ -106,7 +115,7 @@ class TraverseErrorWin(QDialog):
         self.ObsNameLabel.setStyleSheet("color: %s;" % LabelColour)
         self.ObsNameLabel.setObjectName("TravDistLabel")
         self.ObsNameLabel.setMaximumHeight(15)
-        self.GB_Main.Layout.addWidget(self.ObsNameLabel, 3, 0, 1, 1)
+        self.GB_Main.Layout.addWidget(self.ObsNameLabel, 4, 0, 1, 1)
         
         self.BearingLabel = QLabel(self)
         self.BearingLabel.setText("Bearing")
@@ -114,14 +123,14 @@ class TraverseErrorWin(QDialog):
         self.BearingLabel.setStyleSheet("color: %s;" % LabelColour)
         self.BearingLabel.setObjectName("TravDistLabel")
         self.BearingLabel.setMaximumHeight(15)
-        self.GB_Main.Layout.addWidget(self.BearingLabel, 3, 1, 1, 1)
+        self.GB_Main.Layout.addWidget(self.BearingLabel, 4, 1, 1, 1)
         self.DistanceLabel = QLabel(self)
         self.DistanceLabel.setText("Distance")
         self.DistanceLabel.setFont(Font)
         self.DistanceLabel.setStyleSheet("color: %s;" % LabelColour)
         self.DistanceLabel.setObjectName("TravDistLabel")
         self.DistanceLabel.setMaximumHeight(15)
-        self.GB_Main.Layout.addWidget(self.DistanceLabel, 3, 2, 1, 1)
+        self.GB_Main.Layout.addWidget(self.DistanceLabel, 4, 2, 1, 1)
 
     def SideBearingDistances(self):
         '''
@@ -139,7 +148,7 @@ class TraverseErrorWin(QDialog):
             if key == "LineNum":
                 continue
             Line = self.traverse.Lines.__getattribute__(key)
-            row = i + 3
+            row = i + 4
             setattr(self, "ObsForm_"+key, SideObjects(self.GB_Main, Line, row, key))
             setattr(self, "Obs_"+key, Originals(Line, key))
             #row = 1+i
@@ -194,12 +203,16 @@ class TraverseErrorWin(QDialog):
             self.UpdateLineParams(keyChanged)
             self.traverse, self.N_Error, self.E_Error, self.close = \
                 TraverseRecalculate.main(self.traverse, self.gui.CadastralPlan)
+            setattr(self.traverse, "CloseBearing",
+                    funcs.BearingFromDeltas(self.E_Error, self.N_Error))
 
             #Update close in window
-            for key in keyChanged:
-                misclose = str(round(float(self.traverse.Close_PreAdjust), 1))
-                txtStr = "Traverse Misclose (m): " + misclose
-                self.TravCloseLabel.setText(txtStr)
+            misclose = str(round(float(self.traverse.Close_PreAdjust), 1))
+            txtStr = "Misclose (mm): " + misclose
+            self.TravCloseLabel.setText(txtStr)
+
+            txtStr = "Misclose Bearing: " + self.traverse.CloseBearing
+            self.TravCloseBearingLabel.setText(txtStr)
 
 
         #self.accept()
