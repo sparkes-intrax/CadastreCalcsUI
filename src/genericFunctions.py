@@ -293,6 +293,7 @@ def bearing2_dec(bearing):
 
     #get degrees
     degrees = bearing.split(".")[0]
+
     if len(bearing.split(".")) == 1:
         minutes = "0"
         seconds = "0"

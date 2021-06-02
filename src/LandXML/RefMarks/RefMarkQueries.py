@@ -14,8 +14,17 @@ def FindMarkType(LandXML_Obj, PntRefNum):
     for monument in LandXML_Obj.Monuments.getchildren():
         monumentRefPnt = monument.get("pntRef")
         if PntRefNum == monumentRefPnt:
-            type = monument.get("type")
-            break
+            return monument.get("type")
+
+
+    for point in LandXML_Obj.Coordinates.getchildren():
+        if point.get("name") == PntRefNum and point.get("code") is not None:
+            if point.get("code").startswith("SSM"):
+                return "SSM"
+            elif point.get("code").startswith("PM"):
+                return "PM"
+            elif point.get("code").startswith("TS"):
+                return "TS"
 
     return type
 
@@ -58,6 +67,14 @@ def CheckIfRefMark(LandXML_Obj, PntRefNum):
                 (monument.get("type") == "SSM" or monument.get("type") == "PM" or \
                 monument.get("type") == "TS"):
             return True
+        
+    for point in LandXML_Obj.Coordinates.getchildren():
+        if point.get("name") == PntRefNum:
+            if point.get("code") is not None and \
+                    (point.get("code").startswith("SSM") or \
+                     point.get("code").startswith("PM") or \
+                     point.get("code").startswith("TS")):
+                return True
     
     return False
 
@@ -72,6 +89,14 @@ def CheckIfMonument(LandXML_Obj, PntRefNum):
     for monument in LandXML_Obj.Monuments.getchildren():
         if monument.get("pntRef") == PntRefNum:
             return True
+
+    for point in LandXML_Obj.Coordinates.getchildren():
+        if point.get("name") == PntRefNum:
+            if point.get("code") is not None and \
+                    (point.get("code").startswith("SSM") or \
+                     point.get("code").startswith("PM") or \
+                     point.get("code").startswith("TS")):
+                return True
         
     return False
 

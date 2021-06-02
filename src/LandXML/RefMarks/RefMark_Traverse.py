@@ -130,6 +130,14 @@ def CheckRMsNotCalculated(gui, Monuments, LandXML_Obj):
             (MarkType == "SSM" or MarkType == "PM"):
             return False
 
+    for point in LandXML_Obj.Coordinates.getchildren():
+        if point.get("code") is not None and \
+                (point.get("code").startswith("SSM") or \
+                 point.get("code").startswith("PM") or \
+                 point.get("code").startswith("TS")):
+            if not hasattr(gui.CadastralPlan.Points, point.get("name")):
+                return False
+
     return True
 
 

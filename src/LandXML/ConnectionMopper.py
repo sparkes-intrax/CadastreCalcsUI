@@ -29,12 +29,24 @@ def main(gui, LandXML_Obj):
 
     for obs in LandXML_Obj.ReducedObs:
         #ignore Easements
-        if CheckIfEasement(LandXML_Obj, obs):
+        if CheckIfEasement(LandXML_Obj, obs) or CheckObsAllowed(obs, LandXML_Obj.TraverseProps):
             continue
 
         ConnectionMop.ObservationCalculator(obs)
 
     print("Observations left after connection mopper: " + str(len(LandXML_Obj.ReducedObs)))
+
+def CheckObsAllowed(obs, TraverseProps):
+    '''
+
+    :param obs:
+    :param TraverseProps:
+    :return:
+    '''
+    for NotAllowedType in TraverseProps.NotAllowedObs:
+        if NotAllowedType == obs.get("desc"):
+            return True
+    return False
 
 def CheckIfEasement(LandXML_Obj, Observation):
     '''

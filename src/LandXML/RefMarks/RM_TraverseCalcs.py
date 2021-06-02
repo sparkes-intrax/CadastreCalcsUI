@@ -75,11 +75,13 @@ class Traverse:
 
             if self.LandXML_Obj.TraverseProps.MixedTraverse:
                 self.MixTraverse = True
-            # calculate new point and create line object - send gui and update drawing canvas
+            # calculate new point and create line object
             self.PntRefNum = self.LandXML_Obj.TraverseProps.__getattribute__("PntRefNum")
             if len(self.Branches.CurrentBranch.refPnts) == 1:
-                ObsName = dir(connection.Observations)[0]
-                setattr(self.Branches.CurrentBranch, "StartObs", ObsName)
+                for key in connection.Observations.__dict__.keys():
+                    Obs = connection.Observations.__getattribute__(key)
+                    break
+                setattr(self.Branches.CurrentBranch, "StartObs", Obs.get("name"))
             point = TraverseSideCalcs.TraverseSide(self.PntRefNum,
                                                      self.Branches.CurrentBranch, connection,
                                                      self.gui, self.LandXML_Obj)

@@ -25,4 +25,5 @@ class TraverseProps:
         self.LargeLots = False
         self.ExistingLots = False
         self.RmBdyTraverseStart = False
+        self.NotAllowedObs = ["Height Difference"]
 

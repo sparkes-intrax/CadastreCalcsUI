@@ -1,7 +1,7 @@
 '''
 Methods to retreive connections for a given point in the Land XML file
 '''
-from LandXML import RemoveCalculatedConnections, RemoveDeadEnds
+from LandXML import RemoveCalculatedConnections, RemoveDeadEnds, NotAllowedObservations
 from LandXML.RefMarks import FilterNonRMs
 from numpy import sin
 
@@ -31,8 +31,11 @@ class AllConnections:
         Observations = Observations1 + Observations2
         #tObj.stop("Findall lxml operation:")
         '''
+        Observations = NotAllowedObservations.main(Observations, LandXML_Obj.TraverseProps)
         for ob in Observations:
             setattr(self, ob.get("name"), ob)
+            
+
 
 
     def GetQueries(self, PntRefNum, LandXML_Obj):
@@ -181,9 +184,12 @@ def GetObservationDistance(Observation):
     '''
 
     if Observation.get("horizDistance") is None:
-        arcLength = Observation.get("length")
-        radius = Observation.get("radius")
-        return (2 * float(radius) * sin(float(arcLength) / (2 * float(radius))))
+        try:
+            arcLength = Observation.get("length")
+            radius = Observation.get("radius")
+            return (2 * float(radius) * sin(float(arcLength) / (2 * float(radius))))
+        except TypeError:
+            pass
     else:
         return float(Observation.get("horizDistance"))
 

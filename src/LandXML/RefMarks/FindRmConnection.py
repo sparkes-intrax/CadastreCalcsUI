@@ -5,7 +5,7 @@ from LandXML.RefMarks import FilterNonRMs
 from LandXML.Cadastre import CadastreTraverseFilter
 from LandXML import TraverseClose, Connections, RemoveDeadEnds, \
     RemoveCalculatedConnections, NoConnection, BDY_Connections, BranchOperations, \
-    FinalConnectionFilter
+    FinalConnectionFilter, NotAllowedObservations
 
 import CadastreClasses as DataObjects
 from TraverseOperations import CopyTraverseInstance

@@ -116,9 +116,12 @@ class Points:
 
         if len(Observations) > 0:
             Elevation = Observations[0].get("height")
-            if float(Elevation.split(".")[1]) == 0:
+            try:
+                if float(Elevation.split(".")[1]) == 0:
+                    return None
+                else:
+                    return float(Elevation)
+            except IndexError:
                 return None
-            else:
-                return float(Elevation)
         else:
             return None
