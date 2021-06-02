@@ -17,6 +17,8 @@ def main(LandXML_Obj, gui):
 
     ##Loop through Easements to calculate
     for Easement in LandXML_Obj.EasementParcels:
+        if Easement.get("state") == "adjoining":
+            continue
         EasementCalcsObj.CoordinateTraverse(Easement)
 
 

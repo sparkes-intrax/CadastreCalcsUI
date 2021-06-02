@@ -132,7 +132,10 @@ class Traverse:
         startRef = Obs.get("setupID").replace(self.LandXML_Obj.TraverseProps.tag, "")
         SrcPoint = self.CadastralPlan.Points.__getattribute__(startRef)
         endRef = Obs.get("targetSetupID").replace(self.LandXML_Obj.TraverseProps.tag, "")
-        EndPoint = self.CadastralPlan.Points.__getattribute__(endRef)
+        try:
+            EndPoint = self.CadastralPlan.Points.__getattribute__(endRef)
+        except AttributeError:
+            pass
 
         #Line proprs
         self.SetLinePointGuiProps()
