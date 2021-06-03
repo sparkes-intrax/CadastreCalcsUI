@@ -37,7 +37,8 @@ def ApplyCloseAdjustment(traverse, LandXML_Obj, gui):
     traverse = CalculateTraverseDistances(traverse)
     if LandXML_Obj.TraverseProps.TraverseClose:
         N_Error, E_Error, close = TraverseClose.misclose(traverse, gui.CadastralPlan)
-        setattr(traverse, "CloseBearing", funcs.BearingFromDeltas(E_Error, N_Error))
+        if E_Error != 0 or N_Error !=0:
+            setattr(traverse, "CloseBearing", funcs.BearingFromDeltas(E_Error, N_Error))
         traverse.Close_PreAdjust = round(close*1000,4)
         if traverse.Distance != 0:
             close_error = (close/traverse.Distance) * 1e6

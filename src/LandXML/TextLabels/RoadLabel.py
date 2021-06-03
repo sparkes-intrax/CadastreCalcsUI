@@ -6,6 +6,7 @@ import CadastreClasses as DataObjects
 import genericFunctions as funcs
 import numpy as np
 from lxml import etree
+from LandXML import BDY_Connections
 
 
 
@@ -26,11 +27,37 @@ class RoadParcelLabel:
         '''
         # Loop through parcels in landXML file
         for parcel in self.Parcels:
+            #if not self.ProposedParcelConnection(parcel):
+            #    continue
             CentroidObj = parcel.find(self.TraverseProps.Namespace + "Center")
             PntRefNum = CentroidObj.get("pntRef")
             LabelEasting, LabelNorthing, NorthingScreen = self.GetPointCoordinates(PntRefNum)
             Bearing = self.CalculateRoadLabelRotation(parcel)
             self.LabelInstance(LabelEasting, LabelNorthing, NorthingScreen, parcel, Bearing)
+
+    def ProposedParcelConnection(self, parcel):
+        '''
+        Checks if road is frontage to at least one parcel from proposed subdivision
+        :param parcel:
+        :return:
+        '''
+
+        lines = parcel.find(self.TraverseProps.Namespace + "CoordGeom")
+        for line in lines.getchildren():
+
+            startRef = line.find(self.TraverseProps.Namespace + "Start").get("pntRef")
+            endRef = line.find(self.TraverseProps.Namespace + "End").get("pntRef")
+
+            for LotParcel in self.LandXML_Obj.Parcels.getchildren():
+                parcelClass = LotParcel.get("class")
+                parcelState = LotParcel.get("state")
+                if (parcelClass == "Lot" and parcelState == "proposed"):
+                    BdyObj = BDY_Connections.CheckBdyConnection(startRef, self.LandXML_Obj)
+                    if BdyObj.CheckParcelLines(LotParcel, startRef, self.LandXML_Obj.TraverseProps) and \
+                        BdyObj.CheckParcelLines(LotParcel, endRef, self.LandXML_Obj.TraverseProps):
+                        return True
+
+
 
     def GetPointCoordinates(self, PntRefNum):
         '''

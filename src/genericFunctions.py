@@ -79,21 +79,30 @@ def BearingFromDeltas(deltaE, deltaN):
 
     E = abs(deltaE)
     N= abs(deltaN)
-    angle = np.degrees(np.arctan(N/E))
-    
-    bearing = Angle2Bearing(angle, deltaE, deltaN)
-    
-    bearing = bearing2_DMS(bearing)
-    
-    if len(bearing.split(".")) == 1:
-        bearingStr = bearing + eval(r'"\u00B0"')
-    elif len(bearing.split(".")[1]) == 2:
-        bearingStr = bearing.split(".")[0] + eval(r'"\u00B0"') + \
-                     bearing.split(".")[1][0:2] + "'"
+    if E == 0 and N > 0:
+        bearingStr = "0" + eval(r'"\u00B0"')
+    elif E == 0 and N < 0:
+        bearingStr = "180" + eval(r'"\u00B0"')
+    elif N == 0 and E > 0:
+        bearingStr = "90" + eval(r'"\u00B0"')
+    elif N == 0 and E < 0:
+        bearingStr = "270" + eval(r'"\u00B0"')
     else:
-        bearingStr = bearing.split(".")[0] + eval(r'"\u00B0"') + \
-                     bearing.split(".")[1][0:2] + "' " + \
-                     bearing.split(".")[1][2:] + "\""
+        angle = np.degrees(np.arctan(N/E))
+    
+        bearing = Angle2Bearing(angle, deltaE, deltaN)
+
+        bearing = bearing2_DMS(bearing)
+
+        if len(bearing.split(".")) == 1:
+            bearingStr = bearing + eval(r'"\u00B0"')
+        elif len(bearing.split(".")[1]) == 2:
+            bearingStr = bearing.split(".")[0] + eval(r'"\u00B0"') + \
+                         bearing.split(".")[1][0:2] + "'"
+        else:
+            bearingStr = bearing.split(".")[0] + eval(r'"\u00B0"') + \
+                         bearing.split(".")[1][0:2] + "' " + \
+                         bearing.split(".")[1][2:] + "\""
         
     return bearingStr
 
