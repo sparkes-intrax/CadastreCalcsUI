@@ -26,8 +26,10 @@ def main(LandXML_Obj, gui):
 
         if StartPoint.PntRefNum is None and not LandXML_Obj.TraverseProps.LargeLots:
             LandXML_Obj.TraverseProps.LargeLots = True
+            StartPoint.GetTravStart()
         elif StartPoint.PntRefNum is None:
             LandXML_Obj.TraverseProps.ExistingLots = True
+            StartPoint.GetTravStart()
             
     #draw point on canvas
     PointClassObj = PointClass.Points(LandXML_Obj, None)

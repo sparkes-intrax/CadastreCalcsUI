@@ -199,7 +199,7 @@ class TraverseErrorWin(QDialog):
         keyChanged = self.CheckForChanges()
         #Update LandXML
         if self.Changed:
-            self.UpdateLandXML(keyChanged)
+            #self.UpdateLandXML(keyChanged)
             self.UpdateLineParams(keyChanged)
             self.traverse, self.N_Error, self.E_Error, self.close = \
                 TraverseRecalculate.main(self.traverse, self.gui.CadastralPlan)

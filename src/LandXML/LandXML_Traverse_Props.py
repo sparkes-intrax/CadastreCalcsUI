@@ -26,4 +26,5 @@ class TraverseProps:
         self.ExistingLots = False
         self.RmBdyTraverseStart = False
         self.NotAllowedObs = ["Height Difference"]
+        self.CloseTolerance = 125
 

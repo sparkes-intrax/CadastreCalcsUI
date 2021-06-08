@@ -45,6 +45,7 @@ class CadastreTraverses:
         setattr(self.LandXML_Obj.TraverseProps, "RoadConnections", False)
         setattr(self.LandXML_Obj.TraverseProps, "MixedTraverse", False)
         setattr(self.LandXML_Obj.TraverseProps, "TraverseClose", True)
+        setattr(self.LandXML_Obj.TraverseProps, "LargeLots", True)
         #2) Create traverse instance
         if self.LandXML_Obj.RefMarks:
             StartPoint = BdyTraverseStart.TraverseStartPoint(self.gui, self.LandXML_Obj, False)

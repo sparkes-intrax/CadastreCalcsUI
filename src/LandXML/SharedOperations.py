@@ -59,7 +59,7 @@ def ApplyCloseAdjustment(traverse, LandXML_Obj, gui):
         elif close > 5 and traverse.type == "EASEMENT":
             MessageBoxes.genericMessage(message, title)
 
-        if (close*1000 > 20 or close_error > 75) and \
+        if (close*1000 > 20 or close_error > LandXML_Obj.TraverseProps.CloseTolerance) and \
                 traverse.type == "REFERENCE MARKS" and \
                 not traverse.MixedTraverse and close*1000 >= 6:
 
@@ -69,8 +69,8 @@ def ApplyCloseAdjustment(traverse, LandXML_Obj, gui):
                     traverse = TraverseAdjustment(traverse, gui.CadastralPlan, E_Error, N_Error)
                 return gui
 
-        elif close_error > 75 and close*1000 >= 6:
-            Dialog = CloseErrorWindow(gui, traverse, LandXML_Obj)
+        elif close_error > LandXML_Obj.TraverseProps.CloseTolerance and close*1000 >= 6:
+            Dialog = CloseErrorWindow(gui, traverse, LandXML_Obj.TraverseProps.CloseTolerance)
             if not Dialog.Changed:
                 if Dialog.AdjustCurrentTrav:
                     traverse = TraverseAdjustment(traverse, gui.CadastralPlan, E_Error, N_Error)
@@ -78,7 +78,7 @@ def ApplyCloseAdjustment(traverse, LandXML_Obj, gui):
 
                 
 
-        if LandXML_Obj.TraverseProps.ApplyCloseAdjustment and close_error < 1000:
+        if LandXML_Obj.TraverseProps.ApplyCloseAdjustment and close_error < LandXML_Obj.TraverseProps.CloseTolerance:
             traverse = TraverseAdjustment(traverse, gui.CadastralPlan, E_Error, N_Error)
         elif close_error < 1:
             traverse = CleanUpTraverseEnd(traverse)

@@ -3,6 +3,7 @@ Load landXML file into data objects
 '''
 from lxml import etree
 from LandXML import Connections
+import MessageBoxes
 
 def main(file, TraverseProps):
     '''
@@ -15,10 +16,17 @@ def main(file, TraverseProps):
 
     #open landXML file
     lxml = etree.parse(file)
+    ns = lxml.getroot().nsmap
     #remove comments from lxml
     lxml = RemoveComments(lxml)
 
-    ##populated data classes of LandXML_Obj
+    # check if back capture project
+    App = lxml.find("{"+ns[None]+"}"+"Application").get("name")
+    if "DSMSoft" in App:
+        mes = "This LandXML was generated from the Back Capture Project"
+        title = "Back Capture Project"
+        MessageBoxes.genericMessage(mes, title)
+    #populated data classes of LandXML_Obj
     LandXML_Obj = PopulateLandXML_Object(lxml, LandXML_Obj, TraverseProps)
     
     return LandXML_Obj

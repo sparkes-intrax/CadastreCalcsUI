@@ -103,11 +103,14 @@ class ObservationMop:
             self.traverse = SharedOperations.initialiseTraverse(TravStart, TravStart.Layer, False)
             self.distance = self.GetDistance(Observation)
             self.bearing = self.GetBearing(Observation, Flip)
-            #calculate point
-            self.PointCalculation(Observation)
-            self.LineObj(Flip)
-            self.DrawObservation()
-            Observation.getparent().remove(Observation)
+            if self.distance is None or self.bearing is None:
+                Observation.getparent().remove(Observation)
+            else:
+                #calculate point
+                self.PointCalculation(Observation)
+                self.LineObj(Flip)
+                self.DrawObservation()
+                Observation.getparent().remove(Observation)
             
 
 

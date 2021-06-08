@@ -37,8 +37,11 @@ class Points:
         #Return angle for point calculate and its sign for Easting and Northing
         angle, deltaE, deltaN = funcs.bearing2angle(bearing)
         # calculate change in coordinates
-        self.deltaE = float(distance) * sin(radians(angle)) * deltaE
-        self.deltaN = float(distance) * cos(radians(angle)) * deltaN
+        try:
+            self.deltaE = float(distance) * sin(radians(angle)) * deltaE
+            self.deltaN = float(distance) * cos(radians(angle)) * deltaN
+        except:
+            pass
         #get source point object from traverse object
         SrcPoint = self.Points.__getattribute__(self.PntRefNum)
         #calculate new coordinates

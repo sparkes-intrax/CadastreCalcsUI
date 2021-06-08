@@ -38,7 +38,15 @@ def GetMarkNumber(LandXML_Obj, PntRefNum):
 
     for Point in LandXML_Obj.Coordinates.getchildren():
         if PntRefNum == Point.get("name"):
-            return Point.get("oID")
+            ID_Num = Point.get("oID")
+            if ID_Num is None:
+                break
+            else:
+                return ID_Num
+
+    for monument in LandXML_Obj.Monuments.getchildren():
+        if monument.get("pntRef") == PntRefNum:
+            return monument.get("desc")
 
 def GetMarkNumberMonuments(LandXML_Obj, PntRefNum):
     '''
