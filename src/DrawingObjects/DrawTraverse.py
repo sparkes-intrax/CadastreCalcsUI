@@ -72,8 +72,11 @@ class DrawTraverse:
             try:
                 EndRef = self.traverse.refPnts[i+1]
                 self.EndPoint = self.traverse.Points.__getattribute__(EndRef)
-                pointObj = LinesPoints.AddPointToScene(self.gui.view, self.EndPoint, 
+                try:
+                    pointObj = LinesPoints.AddPointToScene(self.gui.view, self.EndPoint,
                                                        self.EndPoint.Layer)
+                except UnboundLocalError:
+                    pass
 
             except IndexError:
                 pass
@@ -113,7 +116,10 @@ class DrawTraverse:
         #get end point coords
         # get source point coordinates
         EndRef = self.line.EndRef
-        self.EndPoint = self.traverse.Points.__getattribute__(EndRef)
+        try:
+            self.EndPoint = self.traverse.Points.__getattribute__(EndRef)
+        except AttributeError:
+            self.EndPoint = self.gui.CadastralPlan.Points.__getattribute__(EndRef)
         self.EndPointE = self.EndPoint.E * 1000
         self.EndPointN = self.EndPoint.NorthingScreen *1000
         

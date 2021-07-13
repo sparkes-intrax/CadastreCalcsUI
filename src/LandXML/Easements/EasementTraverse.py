@@ -134,23 +134,24 @@ class Traverse:
         endRef = Obs.get("targetSetupID").replace(self.LandXML_Obj.TraverseProps.tag, "")
         try:
             EndPoint = self.CadastralPlan.Points.__getattribute__(endRef)
+
+
+            #Line proprs
+            self.SetLinePointGuiProps()
+
+            #Draw line
+            self.GraphLine = self.gui.view.Line(SrcPoint.E*1000, SrcPoint.NorthingScreen*1000,
+                                                EndPoint.E*1000, EndPoint.NorthingScreen*1000,
+                                                self.LinePen)
+
+            # add QGraphicsLine to line.GraphicsItems
+            setattr(point.line.GraphicsItems, "Line", self.GraphLine)
+            point.line.BoundingRect = self.GraphLine.boundingRect()
+
+            #add line to Cadastral Plan
+            setattr(self.CadastralPlan.Lines, Obs.get("name"), point.line)
         except AttributeError:
             pass
-
-        #Line proprs
-        self.SetLinePointGuiProps()
-
-        #Draw line
-        self.GraphLine = self.gui.view.Line(SrcPoint.E*1000, SrcPoint.NorthingScreen*1000,
-                                            EndPoint.E*1000, EndPoint.NorthingScreen*1000,
-                                            self.LinePen)
-
-        # add QGraphicsLine to line.GraphicsItems
-        setattr(point.line.GraphicsItems, "Line", self.GraphLine)
-        point.line.BoundingRect = self.GraphLine.boundingRect()
-
-        #add line to Cadastral Plan
-        setattr(self.CadastralPlan.Lines, Obs.get("name"), point.line)
 
     def SetLinePointGuiProps(self):
         '''

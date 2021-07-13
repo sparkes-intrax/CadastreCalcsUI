@@ -100,15 +100,21 @@ class Writer:
 
         #Get points
         SrcPoint = self.CadastralPlan.Points.__getattribute__(StartRef)
-        EndPoint = self.CadastralPlan.Points.__getattribute__(EndRef)
+        try:
+            EndPoint = self.CadastralPlan.Points.__getattribute__(EndRef)
+        except AttributeError:
+            EndPoint = self.CadastralPlan.Points.__getattribute__(EndRef.split("_")[0])
 
         #get line layer
         Layer = Line.__getattribute__("Layer")
         
         #write line
-        self.modSpace.add_line((SrcPoint.E, SrcPoint.N),
+        try:
+            self.modSpace.add_line((SrcPoint.E, SrcPoint.N),
                                (EndPoint.E, EndPoint.N),
                                dxfattribs={'layer': Layer})
+        except AttributeError:
+            pass
         
     def WriteArc(self, Arc):
         '''

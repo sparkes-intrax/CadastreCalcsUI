@@ -129,7 +129,8 @@ def CheckRMsNotCalculated(gui, Monuments, LandXML_Obj):
         if len(Observations.__dict__.keys()) == 1:
             continue
         if not hasattr(gui.CadastralPlan.Points, monumentRefPnt) and \
-            (MarkType == "SSM" or MarkType == "PM"):
+            (MarkType == "SSM" or MarkType == "PM") and \
+                len(Observations.__dict__.keys()) > 0:
             return False
 
     for point in LandXML_Obj.Coordinates.getchildren():

@@ -23,7 +23,8 @@ def main(file, TraverseProps):
     # check if back capture project
     App = lxml.find("{"+ns[None]+"}"+"Application").get("name")
     if "DSMSoft" in App:
-        mes = "This LandXML was generated from the Back Capture Project"
+        mes = "This LandXML was generated from the Back Capture Project.\n" \
+              "This LandXML has NO Easements and should be added manually."
         title = "Back Capture Project"
         MessageBoxes.genericMessage(mes, title)
     #populated data classes of LandXML_Obj
@@ -57,12 +58,47 @@ def PopulateLandXML_Object(lxml, LandXML_Obj, TraverseProps):
     # get DP number
     Survey = lxml.find(TraverseProps.Namespace + "Survey")
     SurveyHeader = Survey.find(TraverseProps.Namespace + "SurveyHeader")
-    setattr(LandXML_Obj, "DP", SurveyHeader.get("name"))
+    LandXML_Obj = AddAdminData(SurveyHeader,LandXML_Obj, TraverseProps)
+    setattr(LandXML_Obj.PlanAdmin, "Namespace", "{"+ns[None]+"}")
     # get reduced observations
     LandXML_Obj.ReducedObs = Survey.find(TraverseProps.Namespace + "ObservationGroup")
     setattr(LandXML_Obj, "lxml", lxml)
     
     return LandXML_Obj
+
+class AdminData(object):
+    pass
+
+
+def AddAdminData(SurveyHeader, LandXML_Obj, TraverseProps):
+    '''
+    Adds survey adminstrative data to LanddXML_Obj
+    Admin data taken from survey header of LandXML
+    :param SurveyHeader:
+    :param LandXML_Obj:
+    :return:
+    '''
+    AdminDataObj = AdminData()
+
+    #Add DP
+    setattr(AdminDataObj, "DP", "DP" + SurveyHeader.get("name"))
+    #AdminArea
+    AdminArea = SurveyHeader.findall(TraverseProps.Namespace + "AdministrativeArea")
+    for admin in AdminArea:
+        setattr(AdminDataObj, admin.get("adminAreaType"), admin.get("adminAreaName"))
+
+    #Add dates
+    AdminDate = SurveyHeader.findall(TraverseProps.Namespace + "AdministrativeDate")
+    for admin in AdminDate:
+        DataType = admin.get("adminDateType")
+        DataDate = admin.get("adminDate")
+        setattr(AdminDataObj, DataType, DataDate)
+
+    #add admin datato LandXML_Obj
+    setattr(LandXML_Obj, "PlanAdmin", AdminDataObj)
+
+    return LandXML_Obj
+
 
 def RemoveComments(lxml):
     comments = lxml.xpath('//comment()')

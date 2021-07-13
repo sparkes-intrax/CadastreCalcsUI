@@ -72,7 +72,10 @@ class LotParcelLabel:
         #create string for label
         TextStr = "Lot " + parcel.get("name") + "\n"
         TextStr += Area + " m2\n"
-        TextStr += "DP" + self.LandXML_Obj.DP
+        if self.LandXML_Obj.PlanAdmin.DP[0:2] == "DP":
+            TextStr += self.LandXML_Obj.PlanAdmin.DP
+        else:
+            TextStr += "DP" + self.LandXML_Obj.PlanAdmin.DP
         
         #create label object and add to CadastralPlan
         LabelObj = DataObjects.LabelObj(TextStr, LabelEasting, LabelNorthing,

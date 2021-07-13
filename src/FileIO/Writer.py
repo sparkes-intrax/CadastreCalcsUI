@@ -5,7 +5,7 @@ Call csv writer and dxf writer
 '''
 
 from PyQt5.QtWidgets import QDialog, QFileDialog, QMessageBox
-from FileIO import CsvWriter, DxfWriter
+from FileIO import CsvWriter, DxfWriter, GIS, JsonExport
 
 def main(CadastralPlan):
     
@@ -26,6 +26,9 @@ def main(CadastralPlan):
     if File is not None:
         CsvWriter.main(CadastralPlan, File)
         DxfWriter.main(CadastralPlan, File)
+        GIS.main(CadastralPlan, File)
+        JsonExport.main(CadastralPlan, File)
+        
 
 
 class SelectOutputDir(QFileDialog):

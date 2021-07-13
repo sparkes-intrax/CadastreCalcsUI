@@ -323,20 +323,25 @@ class SideObjects:
     def __init__(self, GB, Line, row, name):
         self.Label = QLabel(GB.groupBox)
         self.Label.setText(name)
-        Font = QFont("Segoe UI", 10, )
+        Font = QFont("Segoe UI", 12, )
         LabelColour = "white"
         self.Label.setObjectName("Label_" + name)
         self.Label.setStyleSheet("color: %s;" % LabelColour)
+        #self.Label.minimumHeight(12)
         GB.Layout.addWidget(self.Label, row, 0, 1, 1)
         
         self.BearingEdit = QLineEdit(GB.groupBox)
         self.BearingEdit.setText(Line.__getattribute__("Bearing"))
         self.BearingEdit.setStyleSheet("color: %s;" % LabelColour)
+        self.BearingEdit.setMinimumHeight(12)
+        self.BearingEdit.setFont(Font)
         GB.Layout.addWidget(self.BearingEdit, row, 1, 1, 1)
 
         self.DistanceEdit = QLineEdit(GB.groupBox)
         self.DistanceEdit.setText(str(round(Line.__getattribute__("Distance"),4)))
         self.DistanceEdit.setStyleSheet("color: %s;" % LabelColour)
+        self.DistanceEdit.setMinimumHeight(12)
+        self.DistanceEdit.setFont(Font)
         GB.Layout.addWidget(self.DistanceEdit, row, 2, 1, 1)
 
 class Originals:

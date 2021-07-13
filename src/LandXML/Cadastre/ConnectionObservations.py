@@ -134,11 +134,12 @@ class ConnectionQuery:
                     if len(RemoveTargObs) > 0:
                         TargObs = Connections.RemoveSelectedConnections(TargObs, RemoveTargObs)
 
-            if len(TargObs.__dict__.keys()) == 1:
+            if len(TargObs.__dict__.keys()) == 1 and key not in RemoveObs:
                 RemoveObs.append(key)
 
         if len(RemoveObs) > 0:
             Observations = Connections.RemoveSelectedConnections(Observations, RemoveObs)
+
 
         return Observations
 

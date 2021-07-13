@@ -51,8 +51,7 @@ class TraverseSide:
         self.TargPntRefNum = self.GetTargetPointRefNum()        
         #get Point code - if RM
         self.Code, self.Elevation = self.GetPointCode()
-        if hasattr(self.traverse.Points, self.TargPntRefNum):
-            self.TargPntRefNum = self.TargPntRefNum + "_1"
+
         self.traverse.refPnts.append(self.TargPntRefNum)
         #Calculate the coordinates of the new point - creates a point data object
         self.CalcPointCoords()
@@ -132,7 +131,8 @@ class TraverseSide:
         # Get TargetID PnteRef
         if self.Connection.get("setupID").replace(self.LandXML_Obj.TraverseProps.tag, "") == \
                 self.PntRefNum:
-            return self.Connection.get("targetSetupID").replace(self.LandXML_Obj.TraverseProps.tag, "")
+                TargPntRefNum = self.Connection.get("targetSetupID").replace(self.LandXML_Obj.TraverseProps.tag, "")
+                return self.CheckTargPoint(TargPntRefNum)
         else:
             #flip bearing
             bearing = float(self.bearing) + 180
@@ -141,7 +141,35 @@ class TraverseSide:
 
             self.bearing  = self.CheckBearingFormat(bearing)
             
-            return self.Connection.get("setupID").replace(self.LandXML_Obj.TraverseProps.tag, "")
+            TargPntRefNum =  self.Connection.get("setupID").replace(self.LandXML_Obj.TraverseProps.tag, "")
+            return self.CheckTargPoint(TargPntRefNum)
+
+
+
+    def CheckTargPoint(self, PntRefNum):
+        '''
+        Gives target point a unique identifier - no duplicates
+        :param PntRefNum:
+        :return:
+        '''
+        if hasattr(self.traverse.Points, PntRefNum):
+            return PntRefNum + "_1"
+
+        PointAssigned = False
+        i=0
+        while(not PointAssigned):
+            if i == 0:
+                CheckRefNum = PntRefNum
+            else:
+                CheckRefNum = PntRefNum + "_" + str(i)
+
+            if not hasattr(self.gui.CadastralPlan.Points, CheckRefNum):
+                return CheckRefNum
+
+            i+=1
+
+
+
     def CheckBearingFormat(self, bearing):
         '''
         When a bearing flip is performed the bearing format can be wrong
@@ -175,7 +203,10 @@ class TraverseSide:
                 try:
                     Code += "-" + RefMarkQueries.GetMarkNumber(self.LandXML_Obj, self.TargPntRefNum)
                 except TypeError:
-                    Code += "-" + RefMarkQueries.GetMarkNumberMonuments(self.LandXML_Obj, self.TargPntRefNum)
+                    try:
+                        Code += "-" + RefMarkQueries.GetMarkNumberMonuments(self.LandXML_Obj, self.TargPntRefNum)
+                    except TypeError:
+                        Code += "-MissingNum"
                 
                 #check if point has a elevation in the landdXML
                 PointClassObj = PointClass.Points(self.LandXML_Obj, None)

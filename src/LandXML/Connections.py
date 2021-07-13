@@ -33,9 +33,26 @@ class AllConnections:
         '''
         Observations = NotAllowedObservations.main(Observations, LandXML_Obj.TraverseProps)
         for ob in Observations:
-            setattr(self, ob.get("name"), ob)
+            if self.CheckObs(ob):
+                setattr(self, ob.get("name"), ob)
             
 
+
+    def CheckObs(self, ob):
+        '''
+        Checks if Observation has a azimuth and a distance. Some ReducedObs don't
+        :param Ob: Observation to test
+        :return: bool
+        '''
+        #check has a bearing
+        if ob.get("azimuth") is None and ob.get("chordAzimuth") is None:
+            return False
+        else:
+            #check has a distance
+            if ob.get("length") is None and ob.get("horizDistance") is None:
+                return False
+            else:
+                return True
 
 
     def GetQueries(self, PntRefNum, LandXML_Obj):

@@ -36,6 +36,9 @@ def LandXML(gui):
 
     if LandXML_Obj is not None:
         #if RMs exists and are part of a traverse
+        setattr(gui.CadastralPlan, "Parcels", LandXML_Obj.Parcels)
+        setattr(gui.CadastralPlan, "PlanAdmin", LandXML_Obj.PlanAdmin)
+        setattr(gui.CadastralPlan, "lxml", LandXML_Obj.lxml)
         if LandXML_Obj.RefMarks:
             RefMark_Traverse.main(LandXML_Obj, gui)
             gui = ClearTriedConnections(gui)

@@ -212,6 +212,7 @@ class Traverse():
         self.NonRmBranches = [] #only relevant for RM traverse
         self.Observations = []
         self.Closed = False
+        self.Adjusted = False
         self.LineNum = 1
         self.MixedTraverse = False
 

@@ -113,7 +113,7 @@ class CadastreTraverses:
                     #MopObj = ConnectionMopper.ObservationMop(self.gui.CadastralPlan, self.LandXML_Obj)
                     break
             else:
-                if StartPoint.PntRefNum == "2":
+                if StartPoint.PntRefNum == "42":
                     print("hereh")
                 tObjStarts.stop("Found Start Point: " + StartPoint.PntRefNum, 1)
             #    print("StartPoint: " + StartPoint.PntRefNum)

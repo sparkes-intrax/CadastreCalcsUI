@@ -5,6 +5,7 @@ Landxml for Autocad v-1.13.7
 LandMarK v-LMK V18.01[rj]
 LandMarK v-LMK V20.01[tj]
 Stringer ePlan v-Stringer ePlan V20.10 Build Number 34
+Stringer ePlan V21.00 Build Number 4
 GeoSurvey v-8.05
 12d Model v-14.0C2f
 

@@ -238,6 +238,7 @@ class TraverseStart:
         Observations = ConnectionObservations.main(self.gui.CadastralPlan, self.LandXML_Obj,
                                                    Query)
 
+
         if Query == "Connection":
             PntRefNum = BdyQueries.TestTargetObservations(Observations, self.LandXML_Obj, self.gui,
                                                       self.QueryType, None, True)

@@ -34,6 +34,7 @@ def main(TraverseProps, gui):
         setattr(LandXML_Obj, "TriedConnections", TriedConnections())
         setattr(TraverseProps, "tag", ReducedObsTag(LandXML_Obj))
         setattr(LandXML_Obj, "TraverseProps", TraverseProps)
+        setattr(gui.CadastralPlan, "PlanNum", LandXML_Obj.PlanAdmin.DP)
 
         # Check for Reference marks in landXML
         setattr(LandXML_Obj, "RefMarks", RefMarkCheck(LandXML_Obj, LandXMLFile))
