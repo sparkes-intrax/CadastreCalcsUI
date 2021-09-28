@@ -3,6 +3,7 @@ Creates label instances in CadastralPlan
 '''
 
 import CadastreClasses as DataObjects
+from LandXML.TextLabels import ParcelCentrePoint
 
 class LotParcelLabel:
     def __init__(self, CadastralPlan, Parcels, LandXML_Obj):
@@ -31,7 +32,10 @@ class LotParcelLabel:
                     LabelEasting, LabelNorthing, NorthingScreen = self.GetPointCoordinates(PntRefNum)
                     self.LabelInstance(LabelEasting, LabelNorthing, NorthingScreen, parcel)
                 except AttributeError:
-                    continue
+                    LabelEasting, LabelNorthing, NorthingScreen = ParcelCentrePoint.main(parcel,
+                                                                                self.CadastralPlan,
+                                                                                self.LandXML_Obj)
+                self.LabelInstance(LabelEasting, LabelNorthing, NorthingScreen, parcel)
                 
     def GetPointCoordinates(self, PntRefNum):
         '''

@@ -8,6 +8,7 @@ and the centre point for each lot
 import json, requests
 from geojson import Point, Polygon, Feature, FeatureCollection, dump
 from pyproj import Proj, transform, compat, _compat
+from LandXML.TextLabels import ParcelCentrePoint
 
 
 def main(CadastralPlan, file):
@@ -105,13 +106,17 @@ class GisFiles:
         :param Point:
         :return:
         '''
-        CentrePontRef = parcel.find(self.CadastralPlan.PlanAdmin.Namespace + "Center").get("pntRef")
-        Query = "//CgPoint[@name='" + CentrePontRef + "']"
-        # get CgPoint
-        Point = self.CadastralPlan.lxml.findall(Query, self.CadastralPlan.lxml.getroot().nsmap)[0]
-        Easting = float(Point.text.split(" ")[1])
-        Northing = float(Point.text.split(" ")[0])
-
+        try: #for common cas where LandXML has a center ref
+            CentrePointRef = parcel.find(self.CadastralPlan.PlanAdmin.Namespace + "Center").get("pntRef")
+            Query = "//CgPoint[@name='" + CentrePointRef + "']"
+            # get CgPoint
+            Point = self.CadastralPlan.lxml.findall(Query, self.CadastralPlan.lxml.getroot().nsmap)[0]
+            Easting = float(Point.text.split(" ")[1])
+            Northing = float(Point.text.split(" ")[0])
+        except AttributeError: # when the no center point ref for parcels
+            Easting, Northing, NorthingScreen = ParcelCentrePoint.main(parcel, self.CadastralPlan,
+                                                                       self.CadastralPlan.LandXML_Obj)
+            
         Coord = self.convertCoords(Easting, Northing)
 
         return Coord

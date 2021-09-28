@@ -45,7 +45,7 @@ class CadastreTraverses:
         setattr(self.LandXML_Obj.TraverseProps, "RoadConnections", False)
         setattr(self.LandXML_Obj.TraverseProps, "MixedTraverse", False)
         setattr(self.LandXML_Obj.TraverseProps, "TraverseClose", True)
-        setattr(self.LandXML_Obj.TraverseProps, "LargeLots", True)
+        setattr(self.LandXML_Obj.TraverseProps, "LargeLots", False)
         #2) Create traverse instance
         if self.LandXML_Obj.RefMarks:
             StartPoint = BdyTraverseStart.TraverseStartPoint(self.gui, self.LandXML_Obj, False)
@@ -79,6 +79,9 @@ class CadastreTraverses:
                         self.gui = SharedOperations.ApplyCloseAdjustment(traversePath,
                                                                      self.LandXML_Obj,
                                                                      self.gui)
+                    if  len(traversePath.refPnts) > 2 and not self.LandXML_Obj.TraverseProps.TraverseClose:
+                        traversePath = self.Add2RawPoints(traversePath)
+                        
                     DrawTraverse.main(self.gui, traversePath, self.LandXML_Obj, None)
 
                 elif len(traversePath.refPnts) == 1 and \
@@ -165,6 +168,26 @@ class CadastreTraverses:
             MessageBoxes.genericMessage(message, title)
             TraverseClose.TraverseAdjustment(traverse, self.gui.CadastralPlan,
                                              E_Error, N_Error)
+
+    def Add2RawPoints(self, traversePath):
+        '''
+        Creates LineRaw and PointRaw
+        :param traversePath:
+        :return:
+        '''
+        
+        for key in traversePath.Points.__dict__.keys():
+            point = traversePath.Points.__getattribute__(key)
+            if point.__class__.__name__ == "Point":
+                setattr(traversePath.PointsRaw, key, point)
+                traversePath.refPntsRaw.append(key)
+
+        for key in traversePath.Lines.__dict__.keys():
+            line = traversePath.Lines.__getattribute__(key)
+            if line.__class__.__name__ == "Line" or line.__class__.__name__ == "Arc":
+                setattr(traversePath.LinesRaw, key, line)
+
+        return traversePath
 
 class GetTriedConnections:
     def __init__(self, gui, TriedStartPoints):

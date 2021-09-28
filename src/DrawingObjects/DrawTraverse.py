@@ -238,12 +238,25 @@ class DataCommit:
         #sequentially add points in traverse to CadastralPlan
         for key in self.traverse.Points.__dict__.keys():
             point = self.traverse.Points.__getattribute__(key)
+            #pointRaw = self.traverse.PointsRaw.__getattribute__(key)
             if not point.__class__.__name__ == "Point":
                 continue
             if not hasattr(self.CadastralPlan.Points, key):
                 setattr(self.CadastralPlan.Points, key, point)
+                #setattr(self.CadastralPlan.PointsRaw, key, pointRaw)
             if point.PntNum not in self.CadastralPlan.Points.PointList:
                 self.CadastralPlan.Points.PointList.append(point.PntNum)
+
+        for key in self.traverse.PointsRaw.__dict__.keys():
+            point = self.traverse.PointsRaw.__getattribute__(key)
+            #pointRaw = self.traverse.PointsRaw.__getattribute__(key)
+            if not point.__class__.__name__ == "Point":
+                continue
+            if not hasattr(self.CadastralPlan.PointsRaw, key):
+                setattr(self.CadastralPlan.PointsRaw, key, point)
+                #setattr(self.CadastralPlan.PointsRaw, key, pointRaw)
+            if point.PntNum not in self.CadastralPlan.PointsRaw.PointList:
+                self.CadastralPlan.PointsRaw.PointList.append(key)
 
     def AddLines(self):
         '''
@@ -255,8 +268,10 @@ class DataCommit:
             if key == "LineNum":
                 continue
             line = self.traverse.Lines.__getattribute__(key)
-            #LineNum = self.CadastralPlan.Lines.__getattribute__("LineNum") + 1
+            lineRaw = self.traverse.LinesRaw.__getattribute__(key)
+            LineNum = self.CadastralPlan.Lines.__getattribute__("LineNum") + 1
             setattr(self.CadastralPlan.Lines, key, line)
+            setattr(self.CadastralPlan.LinesRaw, key, lineRaw)
             self.CadastralPlan.Lines.LineNum += 1
 
     def AddTraverses(self):

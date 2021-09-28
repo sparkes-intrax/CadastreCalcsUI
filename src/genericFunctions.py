@@ -306,13 +306,18 @@ def bearing2_dec(bearing):
     if len(bearing.split(".")) == 1:
         minutes = "0"
         seconds = "0"
+    elif len(bearing.split(".")[1]) == 1:
+        minutes = bearing.split(".")[1] + "0"
+        seconds = "0"
     elif len(bearing.split(".")[1]) == 2:
         minutes = bearing.split(".")[1]
         seconds = "0"
+    elif len(bearing.split(".")[1]) == 3:
+        minutes = bearing.split(".")[1][0:2]
+        seconds = bearing.split(".")[1][2] + "0"
     else:
         minutes = bearing.split(".")[1][0:2]
         seconds = bearing.split(".")[1][2:]
-
     bearing_dec = float(degrees) + float(minutes)/60 + float(seconds)/3600
 
     return bearing_dec

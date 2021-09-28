@@ -27,12 +27,12 @@ class TraverseStart:
         :return:
         '''
         if self.FirstTraverse:
-            self.CheckSurveyOrigin()
+            #self.CheckSurveyOrigin()
 
             #if survey origin doesn't have a bdy connection find any RM with
             #           BDY connection
-            if self.PntRefNum is None:
-                self.BdyConnectionStart()
+            #if self.PntRefNum is None:
+            self.BdyConnectionStart()
         else: #
             self.NextTraverses()
 

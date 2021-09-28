@@ -30,8 +30,12 @@ class RoadParcelLabel:
             #if not self.ProposedParcelConnection(parcel):
             #    continue
             CentroidObj = parcel.find(self.TraverseProps.Namespace + "Center")
-            PntRefNum = CentroidObj.get("pntRef")
-            LabelEasting, LabelNorthing, NorthingScreen = self.GetPointCoordinates(PntRefNum)
+            try:
+                PntRefNum = CentroidObj.get("pntRef")
+                LabelEasting, LabelNorthing, NorthingScreen = self.GetPointCoordinates(PntRefNum)
+            except AttributeError:
+                LabelEasting, LabelNorthing, NorthingScreen = self.FindRoadLabelCoordinate(parcel)
+
             Bearing = self.CalculateRoadLabelRotation(parcel)
             self.LabelInstance(LabelEasting, LabelNorthing, NorthingScreen, parcel, Bearing)
 
@@ -80,6 +84,22 @@ class RoadParcelLabel:
         NorthingScreen = self.CadastralPlan.NorthOrigin - DistToOrigin
 
         return Easting, Northing, NorthingScreen
+
+    def FindRoadLabelCoordinate(self, parcel):
+        '''
+        When no road parcel centroid available
+        :param parcel:
+        :return:
+        '''
+
+        lines = parcel.find(self.TraverseProps.Namespace + "CoordGeom")
+        for line in lines.getchildren():
+
+            startRef = line.find(self.TraverseProps.Namespace + "Start").get("pntRef")
+            LabelEasting, LabelNorthing, NorthingScreen = self.GetPointCoordinates(startRef)
+            break
+
+        return LabelEasting, LabelNorthing, NorthingScreen
 
     def CalculateRoadLabelRotation(self, parcel):
         '''

@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import QDialog, QFileDialog, QMessageBox
 from GUI_Objects import Fonts, ObjectStyleSheets, GroupBoxes, InputObjects, ButtonObjects
 from LandXML import LandXML_Objects, Connections
 import MessageBoxes
+from LandXML import BDY_Connections
 
 
 def main(TraverseProps, gui):
@@ -69,12 +70,38 @@ def RefMarkCheck(LandXML_Obj, LandXMLFile):
     :return: boolean whether RMs are present or not
     '''
 
+    #Check if file has monuments
+    try:
+        monument = LandXML_Obj.Monuments.getchildren()[0]
+    except AttributeError:
+        msg = "No Monuments in the selected LandXML file: " + LandXMLFile
+        MessageBoxes.genericMessage(msg, "No Monuments in LandXML")
+        return False
+
+
     for monument in LandXML_Obj.Monuments.getchildren():
         markType = monument.get("type")
         if markType == "SSM" or markType == "PM":
-            Observations = Connections.AllConnections(monument.get("pntRef"), LandXML_Obj)
+            pntRef = ''.join(filter(str.isdigit, monument.get("pntRef")))
+            Observations = Connections.AllConnections(pntRef, LandXML_Obj)
             if len(Observations.__dict__.keys()) > 1:
-                return True
+                # create instance of Boundary checker
+                ConnectionChecker = BDY_Connections.CheckBdyConnection(pntRef, LandXML_Obj)
+                if ConnectionChecker.FindBdyConnection(Observations):
+                    return True
+
+    LandXML_Obj.TraverseProps.LargeLots = True
+    for monument in LandXML_Obj.Monuments.getchildren():
+        markType = monument.get("type")
+        if markType == "SSM" or markType == "PM":
+            pntRef = ''.join(filter(str.isdigit, monument.get("pntRef")))
+            Observations = Connections.AllConnections(pntRef, LandXML_Obj)
+            if len(Observations.__dict__.keys()) > 1:
+                # create instance of Boundary checker
+                ConnectionChecker = BDY_Connections.CheckBdyConnection(pntRef, LandXML_Obj)
+                if ConnectionChecker.FindBdyConnection(Observations):
+                    return True
+
     
     msg = "No SSMs or PMs in the selected LandXML file: " + LandXMLFile 
     MessageBoxes.genericMessage(msg, "No Reference Marks in LandXML")

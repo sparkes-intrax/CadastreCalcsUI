@@ -39,7 +39,8 @@ class CheckBdyConnection:
 
             #Check if TargetID is a parcel vertex
             if self.FindConnection and self.BdyConnection(TargetID):
-                return True
+                if float(Observation.get("horizDistance")) < 30:
+                    return True
             elif self.FilterConnection and not self.TestConnections(TargetID):
                 # when prioritising connections without a BDY connection
                 self.RemoveConnections.append(key)
@@ -113,7 +114,7 @@ class CheckBdyConnection:
             try:
                 parcelArea = float(parcel.get("area"))
                 #filter for large public reserves
-                if parcelArea > 10000 and not self.LargeLots:
+                if parcelArea > 2000 and not self.LargeLots:
                     continue
             except TypeError:
                 continue

@@ -476,7 +476,8 @@ class Traverse:
             #else:
             #    Observations = None
         else:
-            self.TriedStarts(connection)
+            if hasattr(self.gui.CadastralPlan.Points, self.PntRefNum):
+                self.TriedStarts(connection)
             Observations = None
 
 
@@ -512,6 +513,7 @@ class Traverse:
             LineName = self.Branches.CurrentBranch.StartObs
             setattr(self.gui.CadastralPlan.TriedConnections, LineName, Line)
             setattr(self.gui.CadastralPlan.TriedConnections, "LineNum", (LineNum+1))
+
 
         else:
             #get dead end connection from starting point of traverse

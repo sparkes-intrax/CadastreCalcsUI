@@ -5,6 +5,7 @@ writes labels to the drawing canvas
 
 from LandXML.TextLabels import ParcelLabel, EasementLabel, RoadLabel
 from PyQt5 import QtCore
+import numpy as np
 
 def main(LandXML_Obj, gui):
     '''
@@ -53,14 +54,15 @@ class LabelWriter:
 
         for key in self.CadastralPlan.Labels.__dict__.keys():
             Label = self.CadastralPlan.Labels.__getattribute__(key)
-            rotation = Label.Orientation
-            if rotation != 0:
-                rotation = self.LabelRotation(rotation)
-            LabelDisplay = self.gui.view.Text(Label.Easting, Label.NorthingScreen, rotation,
-                                           Label.Label)
-            NewEastPos = Label.Easting*1000 - LabelDisplay.boundingRect().width()/2
-            NewNorthPos = Label.NorthingScreen*1000 - LabelDisplay.boundingRect().height()/2
-            LabelDisplay.setPos(NewEastPos, NewNorthPos)
+            if ~np.isnan(Label.Easting) and ~np.isnan(Label.NorthingScreen):
+                rotation = Label.Orientation
+                if rotation != 0:
+                    rotation = self.LabelRotation(rotation)
+                LabelDisplay = self.gui.view.Text(Label.Easting, Label.NorthingScreen, rotation,
+                                               Label.Label)
+                NewEastPos = Label.Easting*1000 - LabelDisplay.boundingRect().width()/2
+                NewNorthPos = Label.NorthingScreen*1000 - LabelDisplay.boundingRect().height()/2
+                LabelDisplay.setPos(NewEastPos, NewNorthPos)
 
 
     def LabelRotation(self, bearing):

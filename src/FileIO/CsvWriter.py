@@ -14,7 +14,7 @@ def main(CadastralPlan, file):
     with open(file, 'w') as f:
         for key in CadastralPlan.Points.__dict__.keys():
             Point = CadastralPlan.Points.__getattribute__(key)
-            if Point.__class__.__name__ != "Point":# or Point.Layer != "REFERENCE MARKS":
+            if Point.__class__.__name__ != "Point" or Point.Layer != "REFERENCE MARKS":
                 continue
 
             #line = str(Point.PntNum) + ","

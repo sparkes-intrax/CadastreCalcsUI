@@ -50,15 +50,17 @@ def LandXML(gui):
         ConnectionMop = ConnectionMopper.main(gui, LandXML_Obj)
 
         #Check for easements
-        if len(LandXML_Obj.EasementParcels) > 0:
+        #if len(LandXML_Obj.EasementParcels) > 0:
             #Calculate Easements
-            EaseTravObj = EasementCalcs.main(LandXML_Obj, gui)
+        EaseTravObj = EasementCalcs.main(LandXML_Obj, gui)
 
         #Create and Draw Labels
         LabelCoordinator.main(LandXML_Obj, gui)
 
         #set screen coordinates
         GraphicsView.UpdateView(gui, None)
+        
+        setattr(gui.CadastralPlan, "LandXML_Obj", LandXML_Obj)
 
 
 

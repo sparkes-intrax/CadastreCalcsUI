@@ -166,4 +166,5 @@ class ObservationObj:
         '''
 
         for Ob in Observations:
-            setattr(self, Ob.get("name"), Ob)
+            if Ob.text is None:
+                setattr(self, Ob.get("name"), Ob)

@@ -201,6 +201,11 @@ class TraverseStart:
         :return:
         '''
 
+        try:
+            monument = self.LandXML_Obj.Monuments.getchildren()[0]
+        except AttributeError:
+            return False
+
         RemovePntList = []
         for monument in self.LandXML_Obj.Monuments.getchildren():
             MonumentType = monument.get("type")
@@ -293,6 +298,6 @@ class TraverseStart:
 
     def RemovePointsWithNoConnections(self, RemovePntList):
         
-        for Pnt in RemovePntList:
+        for Pnt in list(set(RemovePntList)):
             self.gui.CadastralPlan.Points.PointList.remove(Pnt)
             

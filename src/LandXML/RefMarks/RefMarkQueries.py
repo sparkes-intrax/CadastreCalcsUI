@@ -69,19 +69,23 @@ def CheckIfRefMark(LandXML_Obj, PntRefNum):
     :param PntRefNum:
     :return: Boolean - True if RM, False otherwise
     '''
-    
+    try:
+        monument = LandXML_Obj.Monuments.getchildren()[0]
+    except AttributeError:
+        return False
+
     for monument in LandXML_Obj.Monuments.getchildren():
         if monument.get("pntRef") == PntRefNum and \
-                (monument.get("type") == "SSM" or monument.get("type") == "PM" or \
-                monument.get("type") == "TS"):
+                (monument.get("type") == "SSM" or monument.get("type") == "PM"):# or \
+                #monument.get("type") == "TS"):
             return True
         
     for point in LandXML_Obj.Coordinates.getchildren():
         if point.get("name") == PntRefNum:
             if point.get("code") is not None and \
                     (point.get("code").startswith("SSM") or \
-                     point.get("code").startswith("PM") or \
-                     point.get("code").startswith("TS")):
+                     point.get("code").startswith("PM")):  # or \
+                # point.get("code").startswith("TS")):
                 return True
     
     return False
@@ -94,16 +98,17 @@ def CheckIfMonument(LandXML_Obj, PntRefNum):
     :return: Boolean - True if RM, False otherwise
     '''
 
-    for monument in LandXML_Obj.Monuments.getchildren():
-        if monument.get("pntRef") == PntRefNum:
-            return True
+    if LandXML_Obj.Monuments is not None:
+        for monument in LandXML_Obj.Monuments.getchildren():
+            if monument.get("pntRef") == PntRefNum:
+                return True
 
     for point in LandXML_Obj.Coordinates.getchildren():
         if point.get("name") == PntRefNum:
             if point.get("code") is not None and \
                     (point.get("code").startswith("SSM") or \
-                     point.get("code").startswith("PM") or \
-                     point.get("code").startswith("TS")):
+                     point.get("code").startswith("PM")):# or \
+                     #point.get("code").startswith("TS")):
                 return True
         
     return False
@@ -117,6 +122,10 @@ def CheckIfConnectionMark(LandXML_Obj, PntRefNum):
     :return: Bool
     '''
     AcceptedMonumentList = ["CB", "GIP", "DH&W"]
+    try:
+        monument = LandXML_Obj.Monuments.getchildren()[0]
+    except AttributeError:
+        return False
 
     for monument in LandXML_Obj.Monuments.getchildren():
         if monument.get("pntRef") == PntRefNum and \
@@ -130,6 +139,12 @@ def GetPointCode(LandXML_Obj, TargetID):
     Gets the point code of the point to be calculated
     Only retrieves codes for RMs
     '''
+    try:
+        monument = LandXML_Obj.Monuments.getchildren()[0]
+    except AttributeError:
+        Code = ""
+        return Code
+
     # Get RM type - None if not RM
     MarkType = FindMarkType(LandXML_Obj, TargetID)
     if MarkType is not None:

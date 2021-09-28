@@ -193,6 +193,15 @@ class TraverseSide:
         Only retrieves codes for RMs
         '''
         # Get RM type - None if not RM
+        try:
+            monument = self.LandXML_Obj.Monuments.getchildren()[0]
+        except AttributeError:
+            Code = ""
+            # check if point has a elevation in the landdXML
+            PointClassObj = PointClass.Points(self.LandXML_Obj, None)
+            Elevation = PointClassObj.CheckElevation(self.TargPntRefNum)
+            return Code, Elevation
+
         MarkType = RefMarkQueries.FindMarkType(self.LandXML_Obj, self.TargPntRefNum)
         Elevation = None
         if MarkType is not None:
@@ -213,6 +222,9 @@ class TraverseSide:
                 Elevation = PointClassObj.CheckElevation(self.TargPntRefNum)
         else:
             Code = ""
+
+        if Code == "RMDH&W":
+            Code = "RMDHW"
 
         return Code, Elevation
 

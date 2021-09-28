@@ -67,9 +67,10 @@ def main(LandXML_Obj, gui):
 
         #Handle branches that don't close when looking for closes (add to tried connections)
         if not traverseObj.Branches.CurrentBranch.Closed and LandXML_Obj.TraverseProps.TraverseClose:
-            StartObs = traverseObj.Branches.CurrentBranch.StartObs
-            setattr(gui.CadastralPlan.TriedConnections, StartObs,
-                    traverseObj.Branches.CurrentBranch.Lines.__getattribute__(StartObs))
+            if hasattr(traverseObj.Branches.CurrentBranch, "StartObs"):
+                StartObs = traverseObj.Branches.CurrentBranch.StartObs
+                setattr(gui.CadastralPlan.TriedConnections, StartObs,
+                        traverseObj.Branches.CurrentBranch.Lines.__getattribute__(StartObs))
         #add traverse to Cadastral Plan
         elif len(traverseObj.Branches.CurrentBranch.refPnts) > 1 and traverseObj.Branches is not None:
 

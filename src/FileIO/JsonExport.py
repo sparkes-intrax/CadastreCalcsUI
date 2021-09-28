@@ -92,6 +92,8 @@ Constraints Empty
 '''
 
 import json
+from LandXML import LandXML_Objects, LandXML_Traverse_Props, Connections, LandXML_IO
+from LandXML.TextLabels import ParcelCentrePoint
 
 def main(CadastralPlan, file):
     '''
@@ -113,6 +115,7 @@ class jsonObj:
         self.DataObj = self.CreateDataObj()
         self.PointRefs = PointRef()
         self.LineRefs = LineRef()
+        self.GetPlanObjects()
 
     def CreateDataObj(self):
         '''
@@ -142,9 +145,10 @@ class jsonObj:
         :return:
         '''
 
-        self.AddPoints(self.CadastralPlan.Points)
-        self.AddLinesArcs(self.CadastralPlan.Lines)
+        self.AddPoints(self.CadastralPlan.PointsRaw)
+        self.AddLinesArcs(self.CadastralPlan.LinesRaw)
         self.AddTraverses(self.CadastralPlan.Traverses)
+        self.AddParcels()
         self.SaveJson()
 
     def AddPoints(self, Points):
@@ -162,7 +166,7 @@ class jsonObj:
                 continue
             #add point refs to PointRef object
             self.PointRefs.SD_Num.append(i)
-            self.PointRefs.MAD_Num.append(Point.PntNum)
+            self.PointRefs.MAD_Num.append(key)
             #Get a point dictionary
             PointDict = self.CreatePoints(Point)
             self.DataObj['Points'].append(PointDict)
@@ -186,9 +190,12 @@ class jsonObj:
             self.LineRefs.SD_Num.append(i)
             #Get reference numbers for line
             StartRef, EndRef = self.FindLinePointRefs(Line)
-            LineDict = self.CreateLines(StartRef, EndRef, Line)
-            self.DataObj["Lines"].append(LineDict)
-            i+=1
+            if StartRef is not None and EndRef is not None:
+                LineDict = self.CreateLines(StartRef, EndRef, Line)
+                self.DataObj["Lines"].append(LineDict)
+                i+=1
+            else:
+                print("No Line")
 
     def AddTraverses(self, Traverses):
         '''
@@ -211,7 +218,54 @@ class jsonObj:
             i+=1
 
 
+    def AddParcels(self):
+        '''
+        Loops through parcels in LANDXML_OBJ
+        :return:
+        '''
 
+        # Loop through parcels in landXML file
+        for parcel in self.LandXML_Obj.Parcels.getchildren():
+            parcelClass = parcel.get("class")
+            parcelState = parcel.get("state")
+            # check if a proposed parcel from subdivision
+            if (parcelClass == "Lot" and parcelState == "proposed"):
+                try:
+                    CentroidObj = parcel.find(self.LandXML_Obj.TraverseProps.Namespace + "Center")
+                    PntRefNum = CentroidObj.get("pntRef")
+                    LabelEasting, LabelNorthing, NorthingScreen = self.GetPointCoordinates(PntRefNum)
+                except AttributeError:
+                    LabelEasting, LabelNorthing, NorthingScreen = ParcelCentrePoint.main(parcel,
+                                                                                         self.CadastralPlan,
+                                                                                         self.LandXML_Obj)
+                LotNumber = parcel.get("name")
+                Area = parcel.get("area")
+                LineList = self.GetParcelLineList(parcel)
+                if len(LineList) > 0:
+                    LineDict = self.CreateParcel(LineList, LotNumber, Area, LabelEasting, LabelNorthing)
+                    self.DataObj["Parcels"].append(LineDict)
+
+    def GetPointCoordinates(self, PntRefNum):
+        '''
+        Retrives the coordnates for the lot centroid
+        :param PntRefNum:
+        :return:
+        '''
+
+        # set up point query
+        ns = self.LandXML_Obj.lxml.getroot().nsmap
+        Query = "//CgPoint[@name='" + PntRefNum + "']"
+        # get CgPoint
+        Point = self.LandXML_Obj.lxml.findall(Query, ns)[0]
+        # Retrieve coordinates
+        Easting = float(Point.text.split(" ")[1])
+        Northing = float(Point.text.split(" ")[0])
+
+        # Calculate screen coordinates for drawing canvas
+        DistToOrigin = Northing - self.CadastralPlan.NorthOrigin
+        NorthingScreen = self.CadastralPlan.NorthOrigin - DistToOrigin
+
+        return Easting, Northing, NorthingScreen
 
     def FindLinePointRefs(self, Line):
         '''
@@ -219,14 +273,34 @@ class jsonObj:
         :param Line:
         :return:
         '''
-
-        PntMadStart = Line.StartRef
-        PntSdStart = self.PointRefs.SD_Num[self.PointRefs.MAD_Num.index(PntMadStart)]
-        PntMadEnd = Line.EndRef
-        PntSdEnd = self.PointRefs.SD_Num[self.PointRefs.MAD_Num.index(PntMadEnd)]
+        PntSdStart = None
+        PntSdEnd = None
+        try:
+            PntMadStart = Line.StartRef
+            PntSdStart = self.PointRefs.SD_Num[self.PointRefs.MAD_Num.index(PntMadStart)]
+            PntMadEnd = Line.EndRef
+            PntSdEnd = self.PointRefs.SD_Num[self.PointRefs.MAD_Num.index(PntMadEnd)]
+        except ValueError:
+            pass
 
         return PntSdStart, PntSdEnd
             
+    def GetPlanObjects(self):
+        '''
+        Gets the renewed lxml object from landXML file
+        - required because in creating the Cadastral Plan objects all reduced obs are removed
+        Creates a parcel object
+        :return:
+        '''
+
+        # get LandXML props object
+        TraverseProps = LandXML_Traverse_Props.TraverseProps()
+
+        # LandXML dialog and file load
+        self.LandXML_Obj = LandXML_Objects.main(self.CadastralPlan.LandXmlFile,
+                                           TraverseProps)
+        setattr(TraverseProps, "tag", LandXML_IO.ReducedObsTag(self.LandXML_Obj))
+        setattr(self.LandXML_Obj, "TraverseProps", TraverseProps)
 
     def GetTraverseLines(self, Traverse):
         '''
@@ -236,8 +310,8 @@ class jsonObj:
         '''
 
         LineList = []
-        for key in Traverse.Lines.__dict__.keys():
-            Line = Traverse.Lines.__getattribute__(key)
+        for key in Traverse.LinesRaw.__dict__.keys():
+            Line = Traverse.LinesRaw.__getattribute__(key)
             if type(Line).__name__ == "int":
                 continue
 
@@ -246,6 +320,42 @@ class jsonObj:
             LineList.append(LineRef)
 
         return LineList
+
+    def GetParcelLineList(self, parcel):
+        '''
+        Gets the line list for a json file
+        Line indexes for json file retrieved
+        :param Parcel:
+        :return:
+        '''
+        # get lines out of parcel
+        lines = parcel.find(self.LandXML_Obj.TraverseProps.Namespace + "CoordGeom")
+        LineList = []
+        # loop through line to check vertexes
+        if lines != None:
+            for line in lines.getchildren():
+                startRef = line.find(self.LandXML_Obj.TraverseProps.Namespace + "Start").get("pntRef")
+                Observations = Connections.AllConnections(startRef, self.LandXML_Obj)
+                endRef = self.LandXML_Obj.TraverseProps.tag +  \
+                         line.find(self.LandXML_Obj.TraverseProps.Namespace + "End").get("pntRef")
+                startRef = self.LandXML_Obj.TraverseProps.tag + startRef
+                #find Observation where start and end define Observations
+                for key in Observations.__dict__.keys():
+                    Observation = Observations.__getattribute__(key)
+                    ObRefStart = Observation.get("setupID")
+                    ObRefEnd = Observation.get("targetSetupID")
+
+                    if (ObRefStart == startRef and ObRefEnd == endRef) or \
+                            (ObRefStart == endRef and ObRefEnd == startRef):
+                        ObName = Observation.get("name")
+                        line_i = self.LineRefs.MAD_Num.index(ObName)
+                        LineList.append(self.LineRefs.SD_Num[line_i])
+                        break
+
+        return LineList
+
+
+
 
 
     def CreatePoints(self, Point):
@@ -265,7 +375,7 @@ class jsonObj:
             PointDict["Layer"] = "Boundary"
         elif Point.Layer == "REFERENCE MARKS":
             PointDict["Layer"] = "ReferenceMarks"
-        elif Point.Layer == "EASEMENTS":
+        elif Point.Layer == "EASEMENT":
             PointDict["Layer"] = "Easements"
         else:
             PointDict["Layer"] = Point.Layer
@@ -327,6 +437,29 @@ class jsonObj:
 
         TraverseDict["Lines"] = LineList
         return TraverseDict
+
+    def CreateParcel(self, Lines, LotNumber, Area, LabelEasting, LabelNorthing):
+        '''
+        Creates a parcel dictionary to add to json data object
+        :param Lines:
+        :param LotNumber:
+        :param Area:
+        :param LabelEasting:
+        :param LabelNorthing:
+        :return:
+        '''
+
+        ParcelDict = {}
+        ParcelDict["Lines"] = Lines
+        ParcelDict["PlanNumber"] = self.CadastralPlan.PlanNum
+        ParcelDict["LotNumber"] = LotNumber
+        ParcelDict["Area"] = Area
+        ParcelDict["LabelEasting"] = LabelEasting
+        ParcelDict["LabelNorthing"] = LabelNorthing
+
+        return ParcelDict
+
+
 
     def SaveJson(self):
         '''

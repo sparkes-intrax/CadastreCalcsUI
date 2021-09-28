@@ -16,7 +16,9 @@ class CadastralPlan:
         '''
 
         self.Points = Points()
+        self.PointsRaw = Points()
         self.Lines = Lines()
+        self.LinesRaw = Lines()
         #self.Arcs = Arcs()
         self.Polygons = Polygons()
         self.Labels = Labels()
@@ -196,10 +198,13 @@ class Traverse():
 
         self.Points = Points()
         self.Lines = Lines()
+        self.PointsRaw = Points()
+        self.LinesRaw = Lines()
         #self.Arcs = Arcs()
         self.TriedConnections = Lines()
         self.type = type
         self.refPnts = []
+        self.refPntsRaw = []
         self.StartRefPnt = None
         self.EndRefPnt = None
         self.FirstTraverse = FirstTraverse

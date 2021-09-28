@@ -10,6 +10,7 @@ from LandXML import TraverseErrorWindow
 from DrawingObjects import DrawTraverse
 from PyQt5.QtCore import Qt
 import genericFunctions as funcs
+import copy
 
 
 def initialiseTraverse(StartPoint, Layer, FirstTraverse):
@@ -35,6 +36,7 @@ def ApplyCloseAdjustment(traverse, LandXML_Obj, gui):
     Checks if a close adjustment is required and automatically applies
     '''
     traverse = CalculateTraverseDistances(traverse)
+    traverse = AddRawData(traverse, gui.CadastralPlan).traverse
     if LandXML_Obj.TraverseProps.TraverseClose:
         N_Error, E_Error, close = TraverseClose.misclose(traverse, gui.CadastralPlan)
         if E_Error != 0 or N_Error !=0:
@@ -61,7 +63,7 @@ def ApplyCloseAdjustment(traverse, LandXML_Obj, gui):
             MessageBoxes.genericMessage(message, title)
             traverse.Adjusted = False
             
-        if (close*1000 > 30 or close_error > LandXML_Obj.TraverseProps.CloseTolerance) and \
+        if (close*1000 > 20 or close_error > LandXML_Obj.TraverseProps.CloseTolerance) and \
                 traverse.type == "REFERENCE MARKS" and \
                 not traverse.MixedTraverse:
 
@@ -230,4 +232,67 @@ def CalculateTraverseDistances(traverse):
     setattr(traverse, "deltaN", deltaN)
 
     return traverse
+
+class AddRawData:
+    def __init__(self, traverse, CadastralPlan):
+        '''
+        Add raw Data to traverse fields that won't be adjusted
+        for json output used in S-LINK
+        :param traverse:
+        :param CadastralPlan:
+        '''
+        self.traverse = traverse
+        self.CadastralPlan = CadastralPlan
+        self.PointExchanger = PointExchanger()
+
+        endPoint = self.AddPoints()
+        self.AddLines()
+        self.UpdatePointLastTravLine(endPoint)
+
+    def AddPoints(self):
+
+        for key in self.traverse.Points.__dict__.keys():
+            point = self.traverse.Points.__getattribute__(key)
+            if point.__class__.__name__ == "Point":
+                if len(key.split("_")) > 1:
+                    try:
+                        last = max([int(key) for key in self.CadastralPlan.PointsRaw.__dict__.keys()
+                                    if key.isdigit()])
+                        last = str(last + 1)
+                    except ValueError:
+                        last = str(10000)
+
+                    pointX = PointNumExchange(key, last)
+                    setattr(self.PointExchanger, key, pointX)
+                    key = last
+
+
+                setattr(self.traverse.PointsRaw, key, point)
+                self.traverse.refPntsRaw.append(key)
+
+        return last
+
+    def AddLines(self):
+        for key in self.traverse.Lines.__dict__.keys():
+            line = self.traverse.Lines.__getattribute__(key)
+            if line.__class__.__name__ == "Line" or line.__class__.__name__ == "Arc":
+                setattr(self.traverse.LinesRaw, key, line)
+
+    def UpdatePointLastTravLine(self, endPoint):
+        for key in self.traverse.LinesRaw.__dict__.keys():
+            line = copy.deepcopy(self.traverse.LinesRaw.__getattribute__(key))
+            if (line.__class__.__name__ == "Line" or line.__class__.__name__ == "Arc") and \
+                len(line.EndRef.split("_")) > 1:
+                    line.EndRef = endPoint
+                    setattr(self.traverse.LinesRaw, key, line)
+
+class PointExchanger(object):
+    pass
+
+class PointNumExchange:
+    def __init__(self, pointIn, pointOut):
+        self.pointIn = pointIn
+        self.pointOut = pointOut
+
+
 

@@ -209,6 +209,8 @@ class ObservationMop:
         else:
             self.CreateArcLine(Flip)
 
+        self.CreateTraverse()
+
     def CreateArcLine(self, Flip):
 
         # set rotation
@@ -237,7 +239,22 @@ class ObservationMop:
         Throw message when >5mm. Colour and show
         :return: 
         '''
-        
+    def CreateTraverse(self):
+        '''
+        Crates a traverse instance for ref marks - required for Survey Automation output
+        :return:
+        '''
+
+        point = DataObjects.Point(self.point.PntNum, self.point.E, self.point.N,
+                                  self.point.NorthingScreen, self.point.Elev,
+                                  self.point.Code, self.point.Layer)
+        traverse = SharedOperations.initialiseTraverse(point, "REFERENCE MARKS", False)
+        setattr(traverse.PointsRaw, point.PntNum, point)
+        setattr(self.traverse.Lines, self.ObsName, self.line)
+        setattr(self.traverse.LinesRaw, self.ObsName, self.line)
+        self.traverse.Lines.LineNum += 1
+
+
     def DrawObservation(self):
         '''
         Draws the Observation in gui and adds it to the Cadastral Plan
@@ -249,9 +266,18 @@ class ObservationMop:
         else:
             self.DrawPoint()
             setattr(self.CadastralPlan.Points, self.EndRef, self.point)
+            setattr(self.CadastralPlan.PointsRaw, self.EndRef, self.point)
             self.DrawLineMeth()
         
         setattr(self.CadastralPlan.Lines, self.ObsName, self.line)
+        setattr(self.CadastralPlan.LinesRaw, self.ObsName, self.line)
+
+        #Add traverse
+        TraverseNum = self.CadastralPlan.Traverses.TraverseCounter
+        TravName = "Traverse" + "_" + self.traverse.type + "_" + str(TraverseNum)
+        setattr(self.CadastralPlan.Traverses, TravName, self.traverse)
+        setattr(self.CadastralPlan.Traverses, "TraverseCounter", (TraverseNum + 1))
+
             
     def DrawPoint(self):  
         '''

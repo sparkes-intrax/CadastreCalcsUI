@@ -129,10 +129,11 @@ class Traverse:
         '''
 
         #get point objects of observation
-        startRef = Obs.get("setupID").replace(self.LandXML_Obj.TraverseProps.tag, "")
-        SrcPoint = self.CadastralPlan.Points.__getattribute__(startRef)
-        endRef = Obs.get("targetSetupID").replace(self.LandXML_Obj.TraverseProps.tag, "")
+
         try:
+            startRef = Obs.get("setupID").replace(self.LandXML_Obj.TraverseProps.tag, "")
+            SrcPoint = self.CadastralPlan.Points.__getattribute__(startRef)
+            endRef = Obs.get("targetSetupID").replace(self.LandXML_Obj.TraverseProps.tag, "")
             EndPoint = self.CadastralPlan.Points.__getattribute__(endRef)
 
 
