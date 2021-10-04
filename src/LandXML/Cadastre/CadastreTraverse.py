@@ -52,7 +52,11 @@ class CadastreTraverses:
             traverse = SharedOperations.initialiseTraverse(StartPoint, "BOUNDARY", False)
         else:
             StartPoint = BdyTraverseStart.TraverseStartPoint(self.gui, self.LandXML_Obj, True)
+            if not hasattr(StartPoint, "Easting"):
+                setattr(self.LandXML_Obj.TraverseProps, "LargeLots", True)
+                StartPoint = BdyTraverseStart.TraverseStartPoint(self.gui, self.LandXML_Obj, True)
             traverse = SharedOperations.initialiseTraverse(StartPoint, "BOUNDARY", True)
+
         #3) Whats the condition for continuing to look for traverses
         MoreBdyTraverses = True
         
