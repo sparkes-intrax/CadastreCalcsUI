@@ -49,6 +49,9 @@ class CadastreTraverses:
         #2) Create traverse instance
         if self.LandXML_Obj.RefMarks:
             StartPoint = BdyTraverseStart.TraverseStartPoint(self.gui, self.LandXML_Obj, False)
+            if not hasattr(StartPoint, "Easting"):
+                setattr(self.LandXML_Obj.TraverseProps, "LargeLots", True)
+                StartPoint = BdyTraverseStart.TraverseStartPoint(self.gui, self.LandXML_Obj, True)
             traverse = SharedOperations.initialiseTraverse(StartPoint, "BOUNDARY", False)
         else:
             StartPoint = BdyTraverseStart.TraverseStartPoint(self.gui, self.LandXML_Obj, True)
