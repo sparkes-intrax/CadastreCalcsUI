@@ -92,8 +92,11 @@ def RemoveSelectedConnections(Observations, RemoveObs):
     :return: Observations
     '''
 
-    for Obs in RemoveObs:
-        delattr(Observations, Obs)
+    try:
+        for Obs in RemoveObs:
+            delattr(Observations, Obs)
+    except AttributeError:
+        pass
 
     return Observations
 

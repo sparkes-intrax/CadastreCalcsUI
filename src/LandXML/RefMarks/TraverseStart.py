@@ -74,7 +74,9 @@ class TraverseStart:
         #Loop through monuments checking for first SSM/PM with a parcel connection
         for monument in self.LandXML_Obj.Monuments.getchildren():
             MarkType = monument.get("type")
-
+            originSurvey = monument.get("originSurvey")
+            if originSurvey is not None and originSurvey != self.gui.CadastralPlan.PlanNum:
+                continue
             if MarkType == "SSM" or MarkType == "PM":                
                 Observations = Connections.AllConnections(monument.get("pntRef"), self.LandXML_Obj)
                 setattr(ConnectionChecker, "PntRefNum", monument.get("pntRef"))
@@ -86,6 +88,24 @@ class TraverseStart:
                     self.NorthingScreen = Northing
                     self.Layer = "REFERENCE MARKS"
                     break
+
+        if self.PntRefNum is None:
+            for point in self.LandXML_Obj.Coordinates.getchildren():
+                oID = point.get("oID")
+                if oID is None:
+                    continue
+                Observations = Connections.AllConnections(point.get("name"), self.LandXML_Obj)
+                setattr(ConnectionChecker, "PntRefNum", monument.get("pntRef"))
+                markType = RefMarkQueries.FindMarkType(self.LandXML_Obj, point.get("name"))
+                if ConnectionChecker.FindBdyConnection(Observations):
+                    self.PntRefNum = point.get("name")
+                    self.Code = "RM" + MarkType + "-" + oID
+                    self.Easting, Northing = Coordinates.getPointCoords(self.PntRefNum, self.LandXML_Obj)
+                    self.Northing = Northing
+                    self.NorthingScreen = Northing
+                    self.Layer = "REFERENCE MARKS"
+                    break
+
 
     def NextTraverses(self):
         '''

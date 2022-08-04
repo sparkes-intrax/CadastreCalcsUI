@@ -26,6 +26,7 @@ class GuiDrawing(QGraphicsView):
         Color = QtGui.QColor(self.gui.Colours.backgroundCanvas)#141a1f
         self.scene.setBackgroundBrush(Color)
         self.setScene(self.scene)
+        self._zoom = 0
 
         #set graphics view properties
         self.setDragMode(QGraphicsView.RubberBandDrag)
@@ -88,6 +89,37 @@ class GuiDrawing(QGraphicsView):
 
     #############################################
     #Event handlers
+    def wheelEvent(self, event):
+        if event.angleDelta().y() > 0:
+            factor = 1.25
+            self._zoom += 1
+        else:
+            factor = 0.8
+            self._zoom -= 1
+        if self._zoom > 0:
+            self.scale(factor, factor)
+        else:
+            self._zoom = 0
+        '''
+        elif self._zoom == 0:
+            self.fitInView()
+        else:
+            self._zoom = 0
+        '''
+
+    def fitInView(self, scale=True):
+        rect = QtCore.QRectF(self._photo.pixmap().rect())
+        if not rect.isNull():
+            self.setSceneRect(rect)
+            unity = self.transform().mapRect(QtCore.QRectF(0, 0, 1, 1))
+            self.scale(1 / unity.width(), 1 / unity.height())
+            viewrect = self.viewport().rect()
+            scenerect = self.transform().mapRect(rect)
+            factor = min(viewrect.width() / scenerect.width(),
+                         viewrect.height() / scenerect.height())
+            self.scale(factor, factor)
+            self._zoom = 0
+    '''
     def wheelEvent(self, event: QWheelEvent):
         """
         Zoom in or out of the view.
@@ -123,7 +155,7 @@ class GuiDrawing(QGraphicsView):
             self.translate(delta.x(), delta.y())
             self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
             self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
-
+    '''
     '''
     def mousePressEvent(self, event: QMouseEvent):
 
