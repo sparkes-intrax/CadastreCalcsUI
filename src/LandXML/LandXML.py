@@ -35,10 +35,30 @@ class LandXML():
             setattr(self.TraverseProps, "tag", self.ReducedObsTag())
             setattr(self.LandXML_Obj, "TraverseProps", self.TraverseProps)
 
+            '''
+            if LandXML_Obj.RefMarks:
+                RefMark_Traverse.main(LandXML_Obj, gui)
+                gui = ClearTriedConnections(gui)
+                CadastreTraverse.CadastreTraverses(gui, LandXML_Obj)
+            else:
+                CadastreTraverse.CadastreTraverses(gui, LandXML_Obj)
+                print("NO RMs")
 
-            #if LandXML_Obj.RefMarks:
-            #    RefMark_Traverse.main(LandXML_Obj, gui)
+            ConnectionMop = ConnectionMopper.main(gui, LandXML_Obj)
 
+            # Check for easements
+            # if len(LandXML_Obj.EasementParcels) > 0:
+            # Calculate Easements
+            EaseTravObj = EasementCalcs.main(LandXML_Obj, gui)
+
+            # Create and Draw Labels
+            LabelCoordinator.main(LandXML_Obj, gui)
+
+            # set screen coordinates
+            GraphicsView.UpdateView(gui, None)
+
+            setattr(gui.CadastralPlan, "LandXML_Obj", LandXML_Obj)
+            '''
 
 
     def ReducedObsTag(self):

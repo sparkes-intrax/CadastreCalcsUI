@@ -16,9 +16,13 @@ from DrawingObjects import DrawTraverse
 from TraverseOperations import TraverseClose
 
 import MessageBoxes
+from PyQt5.QtCore import QObject, QThread, pyqtSignal
 
 
-class CadastreTraverses:
+class CadastreTraverses(QObject):
+
+    finished = pyqtSignal()
+    progress = pyqtSignal(str)
     def __init__(self, gui, LandXML_Obj):
         '''
 
@@ -29,7 +33,7 @@ class CadastreTraverses:
 
         self.gui = gui
         self.LandXML_Obj = LandXML_Obj
-        self.CalculateTraverses()
+        #self.CalculateTraverses()
 
     def CalculateTraverses(self):
         '''
