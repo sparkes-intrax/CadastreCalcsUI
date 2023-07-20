@@ -11,7 +11,7 @@ from PyQt5 import QtGui, QtWidgets, QtCore
 from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsView, QGraphicsItem, QGraphicsTextItem
 import sys
 from PyQt5.QtGui import QBrush, QPen, QWheelEvent, QMouseEvent
-from PyQt5.QtCore import Qt, QThreadPool
+from PyQt5.QtCore import Qt, QThreadPool, QThread
 import genericFunctions as funcs
 import numpy as np
 import CadastreClasses as dataObjects
@@ -26,6 +26,7 @@ from TraverseOperations import TraverseOperations, TraverseObject
 from Polygons import ViewPolygon
 import MessageBoxes
 from LandXML import LandXML
+from LandXML.RefMarks import RefMark_Traverse
 #import psutil
 
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
@@ -1171,11 +1172,69 @@ class Window(QMainWindow):
         PointsJoin = True
 
     def ProcessLandXML(self):
-        #self.view.scene.clear()
+        self.load_landXML()
+        # self.view.scene.clear()
         self.view = GraphicsView.GuiDrawing(self)
         self.groupBox_Drawing.Layout.addWidget(self.view, 1, 1, 1, 1)
-        self.CadastralPlan = dataObjects.CadastralPlan()
-        self.LandXML = LandXML.LandXML(self)
+
+        #check if landXML contains data
+        if self.LandXML_Obj is None:
+            return None
+        #process ref marks
+        if self.LandXML_Obj.LandXML_Obj.RefMarks:
+            self.ref_mark_traverses()
+        # self.LandXML = LandXML.LandXML(self)
+    def load_landXML(self):
+        self.LandXML_Obj = LandXML.LandXML(gui=self)
+        self.LandXML_Obj.load_landXML()
+
+    def ref_mark_traverses(self):
+        self.thread = QThread()
+        self.process_worker = RefMark_Traverse.RefMarkTraverses(gui=self,
+                                                                LandXML_Obj=self.LandXML_Obj.LandXML_Obj)
+        self.thread_setup(method=self.process_worker.process_ref_marks,
+                          finish_method=None, progress_complete_meth=self.debug_ref_marks_processed,
+                          progress_report_meth=None, set_progress_meth=None)
+        # disable landXML button
+        self.LandXML_Button.button.setEnabled(False)
+        self.thread.finished.connect(lambda: self.LandXML_Button.button.setEnabled(True))
+    def debug_ref_marks_processed(self):
+        print("RMs CALCULATED")
+
+    def thread_setup(self, method, finish_method, progress_complete_meth,
+                     progress_report_meth,
+                     set_progress_meth):
+        '''
+        genereic method for running threads and calling reporting methods
+        :param method:
+        :param finish_method:
+        :param progress_complete_meth:
+        :param progress_report_meth:
+        :param set_progress_meth:
+        :return:
+        '''
+
+        self.process_worker.moveToThread(self.thread)
+        self.thread.started.connect(method)
+        self.process_worker.finished.connect(self.thread.quit)
+        self.process_worker.finished.connect(self.process_worker.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+        if progress_report_meth is not None:
+            self.process_worker.progress.connect(progress_report_meth)
+        if set_progress_meth is not None:
+            self.process_worker.progress.connect(set_progress_meth)
+
+        # Start Thread
+        self.thread.start()
+
+        # Final resets
+        # self.ui.pBut_processSurvey.setEnabled(False)
+        # self.thread.finished.connect(lambda: self.ui.pBut_processSurvey.setEnabled(True))
+
+        if finish_method is not None:
+            self.thread.finished.connect(finish_method)
+        else:
+            self.thread.finished.connect(progress_complete_meth)
 
     def CallWriter(self):
         Writer.main(self.CadastralPlan)
