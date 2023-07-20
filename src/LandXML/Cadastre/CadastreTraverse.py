@@ -35,7 +35,7 @@ class CadastreTraverses(QObject):
         self.LandXML_Obj = LandXML_Obj
         #self.CalculateTraverses()
 
-    def CalculateTraverses(self):
+    def calculate_traverses(self):
         '''
         Calculates boundary traverse paths
         :return:

@@ -27,6 +27,7 @@ from Polygons import ViewPolygon
 import MessageBoxes
 from LandXML import LandXML
 from LandXML.RefMarks import RefMark_Traverse
+from LandXML.Cadastre import CadastreTraverse
 #import psutil
 
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
@@ -1183,6 +1184,8 @@ class Window(QMainWindow):
         #process ref marks
         if self.LandXML_Obj.LandXML_Obj.RefMarks:
             self.ref_mark_traverses()
+
+
         # self.LandXML = LandXML.LandXML(self)
     def load_landXML(self):
         self.LandXML_Obj = LandXML.LandXML(gui=self)
@@ -1193,13 +1196,27 @@ class Window(QMainWindow):
         self.process_worker = RefMark_Traverse.RefMarkTraverses(gui=self,
                                                                 LandXML_Obj=self.LandXML_Obj.LandXML_Obj)
         self.thread_setup(method=self.process_worker.process_ref_marks,
-                          finish_method=None, progress_complete_meth=self.debug_ref_marks_processed,
+                          finish_method=self.cadastre_traverses, progress_complete_meth=self.debug_ref_marks_processed,
                           progress_report_meth=None, set_progress_meth=None)
         # disable landXML button
         self.LandXML_Button.button.setEnabled(False)
+
+
+    def cadastre_traverses(self):
+        self.thread = QThread()
+        self.process_worker = CadastreTraverse.CadastreTraverses(gui=self,
+                                                                LandXML_Obj=self.LandXML_Obj.LandXML_Obj)
+        self.thread_setup(method=self.process_worker.calculate_traverses,
+                          finish_method=self.cadastre_traverses, progress_complete_meth=self.debug_cadastre_processed,
+                          progress_report_meth=None, set_progress_meth=None)
         self.thread.finished.connect(lambda: self.LandXML_Button.button.setEnabled(True))
+
     def debug_ref_marks_processed(self):
         print("RMs CALCULATED")
+
+    def debug_cadastre_processed(self):
+        print("CADASTRE CALCULATED")
+
 
     def thread_setup(self, method, finish_method, progress_complete_meth,
                      progress_report_meth,

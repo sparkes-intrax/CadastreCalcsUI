@@ -2,7 +2,7 @@
 Workflow for Reference mark traverses
 '''
 import CadastreClasses as DataObjects
-from LandXML import Connections, BDY_Connections, SharedOperations, PointClass#, LandXML_Traverses
+from LandXML import Connections, BDY_Connections, SharedOperations, PointClass, ClearTriedConnections#, LandXML_Traverses
 from LandXML.RefMarks import TraverseStart, RM_TraverseCalcs
 from TraverseOperations import TraverseOperations, TraverseClose
 from PyQt5.QtCore import QObject, QThread, pyqtSignal
@@ -120,6 +120,8 @@ class RefMarkTraverses(QObject):
                 break
             traverseCounter +=1
             '''
+
+        self.gui = ClearTriedConnections.ClearTriedConnections(self.gui)
         self.finished.emit()
 
     def CheckRMsNotCalculated(self, Monuments):
