@@ -4,6 +4,7 @@ Writes lines and text to file
 
 import ezdxf
 from ezdxf.tools.text import MTextEditor
+from ezdxf.enums import TextEntityAlignment
 
 def main(CadastralPlan, file):
     '''
@@ -194,7 +195,8 @@ class Writer:
                               'height': 0.7,
                               'rotation': rotation,
                               'layer': 'TEXT'}
-                          ).set_pos((text.Easting, text.Northing), align='MIDDLE_CENTER')
+                          ).set_placement((text.Easting, text.Northing),
+                                          align=TextEntityAlignment.MIDDLE_CENTER)
 
 
         

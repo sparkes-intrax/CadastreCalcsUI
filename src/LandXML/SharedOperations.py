@@ -12,7 +12,6 @@ from PyQt5.QtCore import Qt
 import genericFunctions as funcs
 import copy
 
-
 def initialiseTraverse(StartPoint, Layer, FirstTraverse):
     '''
     Creates a traverse object for starting a new traverse from startPoint
@@ -247,10 +246,12 @@ class AddRawData:
 
         endPoint = self.AddPoints()
         self.AddLines()
-        self.UpdatePointLastTravLine(endPoint)
+        if endPoint is not None:
+
+            self.UpdatePointLastTravLine(endPoint)
 
     def AddPoints(self):
-
+        last = None
         for key in self.traverse.Points.__dict__.keys():
             point = self.traverse.Points.__getattribute__(key)
             if point.__class__.__name__ == "Point":

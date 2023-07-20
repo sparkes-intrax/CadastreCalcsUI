@@ -274,7 +274,10 @@ class ObservationMop:
 
         #Add traverse
         TraverseNum = self.CadastralPlan.Traverses.TraverseCounter
-        TravName = "Traverse" + "_" + self.traverse.type + "_" + str(TraverseNum)
+        try:
+            TravName = "Traverse" + "_" + self.traverse.type + "_" + str(TraverseNum)
+        except TypeError:
+            TravName = "Traverse" + "_BOUNDARY_" + str(TraverseNum)
         setattr(self.CadastralPlan.Traverses, TravName, self.traverse)
         setattr(self.CadastralPlan.Traverses, "TraverseCounter", (TraverseNum + 1))
 

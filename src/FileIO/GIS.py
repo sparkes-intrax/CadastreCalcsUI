@@ -7,7 +7,7 @@ and the centre point for each lot
 
 import json, requests
 from geojson import Point, Polygon, Feature, FeatureCollection, dump
-from pyproj import Proj, transform, compat, _compat
+from pyproj import Proj, transform#, compat, _compat
 from LandXML.TextLabels import ParcelCentrePoint
 
 
