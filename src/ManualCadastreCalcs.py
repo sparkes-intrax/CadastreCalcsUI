@@ -8,10 +8,11 @@ Enables digitial traverse and checking closes
 '''
 
 from PyQt5 import QtGui, QtWidgets, QtCore
-from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsView, QGraphicsItem, QGraphicsTextItem
+from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsScene, QGraphicsView, QGraphicsItem, QGraphicsTextItem, \
+    QFrame, QSizePolicy
 import sys
 from PyQt5.QtGui import QBrush, QPen, QWheelEvent, QMouseEvent
-from PyQt5.QtCore import Qt, QThreadPool, QThread
+from PyQt5.QtCore import Qt, QThreadPool, QThread, QSize
 import genericFunctions as funcs
 import numpy as np
 import CadastreClasses as dataObjects
@@ -20,7 +21,7 @@ from TraverseOperations import TraverseClose, CreateTraverseObject
 import drawObjects
 
 from GUI_Objects import GroupBoxes, Fonts, InputObjects, ButtonObjects, \
-    ObjectStyleSheets, GraphicsView, ColourScheme
+    ObjectStyleSheets, GraphicsView, ColourScheme, MAD_Frames, MAD_Layouts
 from DrawingObjects import LinesPoints, DrawingChecks
 from TraverseOperations import TraverseOperations, TraverseObject
 from Polygons import ViewPolygon
@@ -60,9 +61,25 @@ class Window(QMainWindow):
         self.ShowSelectedParams = False
 
         #Add menu bar to QMainWindow
-        self.AddMenuBar()
+        #self.AddMenuBar()
 
-        #Add Toolbar
+        #add main layout
+        self.widget_layout = MAD_Layouts.MAD_Layout(self, "widget_layout")
+        self.widget_layout.horizontal()
+        #add main frame
+        self.main_frame = MAD_Frames.MAD_Frame(widget=self,
+                                               name="MAD_main_frame",
+                                               frame_shape=QFrame.NoFrame,
+                                               frame_shadow=QFrame.Raised,
+                                               min_size=QSize(1500,990))
+        self.main_frame.create_frame()
+        self.main_frame.frame_size_policy(x_size_policy=QSizePolicy.Expanding,
+                                             y_size_policy=QSizePolicy.Expanding,
+                                             heightForWidth=True)
+        self.main_layout = MAD_Layouts.MAD_Layout(self, "main_layout")
+        self.main_layout.horizontal()
+        #Add toggleButton
+
 
 
         # Add groupBoxes
@@ -93,8 +110,11 @@ class Window(QMainWindow):
 
 
         self.view = GraphicsView.GuiDrawing(self)
-        self.groupBox_Drawing.Layout.addWidget(self.view, 1, 1, 1, 1)
 
+        self.drawing_frame_layout.layout.addWidget(self.view)
+        self.main_layout.layout.addWidget(self.drawing_frame.frame)
+        self.main_layout.layout.addWidget((self.data_entry_frame.frame))
+        self.widget_layout.layout.addWidget(self.main_frame.frame)
 
         #self.setWindowIcon(QtGui.QIcon("icon.png"))
         self.setWindowTitle(self.title)
@@ -242,8 +262,8 @@ class Window(QMainWindow):
         ToolBar.addAction(self.IntersectionPointAction)
         ToolBar.setStyleSheet(style)
 
-        ToolBar.setIconSize(QtCore.QSize(50, 50))
-        self.groupBox_Drawing.Layout.addWidget(ToolBar,1,0,1,1)
+        ToolBar.setIconSize(QtCore.QSize(20, 20))
+        self.drawing_frame_layout.layout.addWidget(ToolBar)
         #self.addToolBar(Qt.LeftToolBarArea, ToolBar)
 
     def AddGroupBoxes(self):
@@ -254,16 +274,52 @@ class Window(QMainWindow):
 
         #Drawing GroupBox
         Font = Fonts.MajorGroupBox()
-        rect = QtCore.QRect(10, 48, 1100, 830)
-        self.groupBox_Drawing = GroupBoxes.GUI_GroupBox(rect, "", "Drawing", Font,
-                                                       "Grid", self, self.Colours.backgroundUI,
-                                                        self.Colours.backgroundUI)
+        rect = QtCore.QRect(10, 48, 1100, 894)
+
+        self.drawing_frame = MAD_Frames.MAD_Frame(widget=self.main_frame.frame,
+                                                  name='drawing_frame',
+                                                  min_size=QSize(1000,800),
+                                                  max_size=QSize(16777215, 900))
+        self.drawing_frame.create_frame()
+        self.drawing_frame.frame_size_policy(x_size_policy=QSizePolicy.Expanding,
+                                             y_size_policy=QSizePolicy.Expanding,
+                                             heightForWidth=True)
+        self.drawing_frame_layout = MAD_Layouts.MAD_Layout(widget=self.drawing_frame.frame,
+                                                           name="drawing_frame_layout")
+        self.drawing_frame_layout.horizontal()
+            #(rect, "", "Drawing", Font,
+            #                                           "Grid", self, self.Colours.backgroundUI,
+            #                                            self.Colours.backgroundUI)
         #Points main groupbox
+        self.data_entry_frame = MAD_Frames.MAD_Frame(widget=self.main_frame.frame,
+                                                     name="data_entry_frame",
+                                                     frame_shape=QFrame.NoFrame,
+                                                     frame_shadow=QFrame.Raised
+                                                     )
+        self.data_entry_frame.create_frame()
+
+        self.data_entry_layout = MAD_Layouts.MAD_Layout(widget=self.data_entry_frame.frame,
+                                                        name="data_entry_layout")
+        self.data_entry_layout.vertical()
+
         rect = QtCore.QRect(1120, 40, 350, 670)
+        self.data_entry_points_frame = MAD_Frames.MAD_Frame(widget=self.data_entry_frame.frame,
+                                                     name="data_entry_frame_points",
+                                                     frame_shape=QFrame.NoFrame,
+                                                     frame_shadow=QFrame.Raised,
+                                                        max_size=QSize(350,670), min_size=QSize(350,670)
+                                                     )
+        self.data_entry_points_frame.create_frame()
+
+        self.data_entry_points_layout = MAD_Layouts.MAD_Layout(widget=self.data_entry_points_frame.frame,
+                                                        name="data_entry_layout")
+        self.data_entry_points_layout.vertical()
+
         self.groupBox_Points = GroupBoxes.GUI_GroupBox(rect, "Points", "Points", Font,
-                                                       "Grid", self, self.Colours.GroupBoxLabelColour,
+                                                       "Grid", self.data_entry_points_frame.frame, self.Colours.GroupBoxLabelColour,
                                                        self.Colours.backgroundUI)
 
+        self.data_entry_points_layout.layout.addWidget(self.groupBox_Points.groupBox)
         #Enter Point GroupBox
         Font = Fonts.MinorGroupBox()
         self.groupBox_EnterPoint = GroupBoxes.GUI_GroupBox(None, "Add Point by Coordinates",
@@ -273,7 +329,8 @@ class Window(QMainWindow):
                                                        self.Colours.backgroundUI)
         self.groupBox_EnterPoint.groupBox.setMaximumSize(330, 160)
         self.groupBox_EnterPoint.groupBox.setMinimumSize(330, 160)
-        self.groupBox_Points.Layout.addWidget(self.groupBox_EnterPoint.groupBox, 2, 0, 1, 1)
+        self.data_entry_points_layout.layout.addWidget(self.groupBox_EnterPoint.groupBox)
+        #self.groupBox_Points.Layout.addWidget(self.groupBox_EnterPoint.groupBox, 2, 0, 1, 1)
 
         #Calculate Points GroupBox
         self.groupBox_CalcPoint = GroupBoxes.GUI_GroupBox(None, "Calculate Points",
@@ -316,10 +373,10 @@ class Window(QMainWindow):
         #Traverse GroupBox
         rect = QtCore.QRect(10, 885, 1100, 95)
 
-        self.groupBox_Traverses = GroupBoxes.GUI_GroupBox(rect, "Traverse Functions",
-                                                          "Traverses", Font, "Grid",
-                                                          self,  self.Colours.GroupBoxLabelColour,
-                                                       self.Colours.backgroundUI)
+        #self.groupBox_Traverses = GroupBoxes.GUI_GroupBox(rect, "Traverse Functions",
+        #                                                  "Traverses", Font, "Grid",
+        #                                                  self,  self.Colours.GroupBoxLabelColour,
+        #                                               self.Colours.backgroundUI)
 
     def GUI_Inputs_Buttons(self):
         '''
@@ -354,7 +411,7 @@ class Window(QMainWindow):
         #Polygon GroupBox
         self.PolygonGroupBox_Objects()
         #Traverse Ops GroupBox
-        self.TraverseOpsGroupBox_Objects()
+        #self.TraverseOpsGroupBox_Objects()
 
     def EnterPointGroupBox_Objects(self):
         '''

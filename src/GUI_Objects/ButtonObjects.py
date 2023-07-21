@@ -5,6 +5,7 @@ Adds a button object to selected widget
 from PyQt5.QtWidgets import QPushButton, QGraphicsDropShadowEffect
 from PyQt5.QtGui import QColor
 from DrawingObjects import LinesPoints
+from GUI_Objects import ColourScheme
 
 class Add_QButton:
 
@@ -56,3 +57,17 @@ class Add_QButton:
         self.button.setStyleSheet(style)
         self.button.setFont(Font)
         widget.Layout.addWidget(self.button, ButtonRow, ButtonCol, Button_Rows, Button_Cols)
+
+def button_style():
+
+    colours = ColourScheme.Colours()
+    style = u"QPushButton {\n" \
+            u"background-position: center;\n" \
+            u"background-repeat: no-repeat;\n" \
+            u"border: none;\n" \
+            u"background-color: " + colours.buttonColour + u";\n" \
+            u"}\n" \
+            u"QPushButton:hover {\n" \
+                u"background-color: " + colours.buttonHoverColour + u";\n }\n"
+
+    return style

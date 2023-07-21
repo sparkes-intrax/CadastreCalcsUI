@@ -1,6 +1,7 @@
 '''
 clears any connections thbat were added to the tried list
 '''
+import CadastreClasses as DataObjects
 
 def ClearTriedConnections(gui):
     '''

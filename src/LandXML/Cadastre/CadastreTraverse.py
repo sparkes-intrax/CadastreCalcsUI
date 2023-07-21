@@ -23,14 +23,14 @@ class CadastreTraverses(QObject):
 
     finished = pyqtSignal()
     progress = pyqtSignal(str)
-    def __init__(self, gui, LandXML_Obj):
+    def __init__(self, gui, LandXML_Obj, parent=None):
         '''
 
         :param gui:
         :param LandXML_Obj:
         :return:
         '''
-
+        QObject.__init__(self, parent)
         self.gui = gui
         self.LandXML_Obj = LandXML_Obj
         #self.CalculateTraverses()
