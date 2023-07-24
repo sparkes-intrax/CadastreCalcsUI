@@ -281,9 +281,10 @@ class Window(QMainWindow):
                                                   min_size=QSize(1000,800),
                                                   max_size=QSize(16777215, 900))
         self.drawing_frame.create_frame()
-        self.drawing_frame.frame_size_policy(x_size_policy=QSizePolicy.Expanding,
-                                             y_size_policy=QSizePolicy.Expanding,
-                                             heightForWidth=True)
+        self.drawing_frame.frame = SizePolicyObj(QSizePolicy.Expanding, QSizePolicy.Expanding, self.drawing_frame.frame)
+        #self.drawing_frame.frame_size_policy(x_size_policy=QSizePolicy.Expanding,
+                                             #y_size_policy=QSizePolicy.Expanding,
+                                             #heightForWidth=True)
         self.drawing_frame_layout = MAD_Layouts.MAD_Layout(widget=self.drawing_frame.frame,
                                                            name="drawing_frame_layout")
         self.drawing_frame_layout.horizontal()
@@ -361,7 +362,7 @@ class Window(QMainWindow):
         self.groupBox_ArcParams.groupBox.setMaximumSize(330, 100)
         self.groupBox_ArcParams.groupBox.setMinimumSize(330, 100)
         self.groupBox_Points.Layout.addWidget(self.groupBox_ArcParams.groupBox, 5, 0, 1, 1)
-
+        '''
         #Polygon Input
         rect = QtCore.QRect(1120, 730, 350, 250)
         Font = Fonts.MajorGroupBox()
@@ -377,7 +378,7 @@ class Window(QMainWindow):
         #                                                  "Traverses", Font, "Grid",
         #                                                  self,  self.Colours.GroupBoxLabelColour,
         #                                               self.Colours.backgroundUI)
-
+        '''
     def GUI_Inputs_Buttons(self):
         '''
         Adds INput items and Buttons
@@ -409,7 +410,7 @@ class Window(QMainWindow):
         #Arc Params GroupBox
         self.ArcParamsGroupBox_Objects()
         #Polygon GroupBox
-        self.PolygonGroupBox_Objects()
+        #self.PolygonGroupBox_Objects()
         #Traverse Ops GroupBox
         #self.TraverseOpsGroupBox_Objects()
 
@@ -1312,6 +1313,18 @@ class Window(QMainWindow):
 
     def CallWriter(self):
         Writer.main(self.CadastralPlan)
+
+def SizePolicyObj(PolicyX, PolicyY, object):
+
+    SizePolicy = QSizePolicy(PolicyX, PolicyY)
+    SizePolicy.setHorizontalStretch(0)
+    SizePolicy.setVerticalStretch(0)
+
+    SizePolicy.setHeightForWidth(object.sizePolicy().hasHeightForWidth())
+
+    object.setSizePolicy(SizePolicy)
+
+    return object
         
 
 def SetLinePen(line, colour, linewidth):
